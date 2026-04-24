@@ -6,13 +6,13 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ETF管家">
+<meta name="apple-mobile-web-app-title" content="台股小管家">
 <meta name="theme-color" content="#0F6E56">
-<link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22ETF%20%E7%AE%A1%E5%AE%B6%22%2C%22short_name%22%3A%22ETF%E7%AE%A1%E5%AE%B6%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230F6E56%22%2C%22theme_color%22%3A%22%230F6E56%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22icon-192.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+<link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22%E5%8F%B0%E8%82%A1%E5%B0%8F%E7%AE%A1%E5%AE%B6%22%2C%22short_name%22%3A%22%E5%B0%8F%E7%AE%A1%E5%AE%B6%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230F6E56%22%2C%22theme_color%22%3A%22%230F6E56%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22icon-192.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
 <link rel="apple-touch-icon" href="icon-192.png">
 <!-- Fallback inline icon for iOS in case file not found -->
 <link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAADc0lEQVR4nO3cwVEbWRRAUYny3uQwQUwmJobZmFhgMzFAJhPE5AAReBZTdtlYEi3pd7d0OSeA339x6/G6C9huVvT565dvaz6febw+Pm/XevZiDxbvx7ZU5LM+RMTsMmfcsxwsZKaYI+yhBwqZU4wMe8hBQmaEEWHfnHuAmBllREtnBS1mRju3qZNGvJBZwikryNETWsws5ZTWjgpazCzt2OYmBy1m1nJMe5OCFjNrm9rgu0GLmUsxpcWzv0PDJTkYtOnMpXmvyb1Bi5lLdajNnUGLmUu3r1E7NCm/BW06cy12tWpCk/JL0KYz1+ZtsyY0KT+CNp25Vj+3a0KTImhSbjYb6wbX73vDJjQpgiZF0KQImpStF0JKTGhSBE2KoEkRNCmCJkXQpAiaFEGTImhSBE2KoEkRNCmCJuXT2he4di8PT8PPvL2/G37mR2FCkyJoUgRNiqBJETQpgiZF0KQImhRBkyJoUgRNivjdD79fvz8Oj9FnMj8TmhRBkyJoUgRNiqBJETQpgiZF0KQImhRBkyJoUgRNiqBJETQpgiZF0KQImhRBkyJoUgRNiqBJETQpgiZF0KQImhRBkyJoUgRNiqBJETQpgiZF0KQImhRBkyJoUgRNiqBJETQpgiZF0KQImhRBkyJoUgRNiqBJETQpgiZF0KQImhRBkyJoUgRNiqBJETQpgiZF0KQImhRBkyJoUgRNyvb168evaz8CRvm09g328/Lw9M/ae+C02/u7v9e+w1tWDlIETYodmhQTmhRBkyJoUgRNiqBJETQpgiZF0KTcvD4+b9e+BIzw+vi8NaFJETQpgiZF0KTcbDb/L9NrXwTO8b1hE5oUQZPyI2hrB9fq53ZNaFJ+CdqU5tq8bdaEJuW3oE1prsWuVk1oUnYGbUpz6fY1endCi5pLdajNgyuHqLk07zVphybl3aBNaS7FlBYnTWhRs7apDU5eOUTNWo5p76gdWtQs7djmjn4pFDVLOaW1s+L0v6WZwzlD86zPdqY1o53b1NnfoUXNKCNaGhqjFYRTjByKs0xXYTPFHD/dZ10XhM0uc66pi+2/4v7YlnrXWvWFTuRNa34o+A83yb4zaBtvCAAAAABJRU5ErkJggg==">
-<title>ETF管家</title>
+<title>台股小管家</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -247,8 +247,8 @@ code { font-family: monospace; font-size: 12px; background: var(--bg2); padding:
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <h1>ETF 管家</h1>
-      <p>台股 ETF 庫存管理</p>
+      <h1>台股小管家</h1>
+      <p>股海翻騰，為您掌舵！</p>
     </div>
     <nav class="sidebar-nav">
       <button class="nav-item active" onclick="showPage('overview')">
@@ -261,7 +261,7 @@ code { font-family: monospace; font-size: 12px; background: var(--bg2); padding:
         <span class="nav-icon">🏦</span><span class="nav-label">質押紀錄</span>
       </button>
       <button class="nav-item" id="nav-dividend" onclick="showPage('dividend')">
-        <span class="nav-icon">💰</span><span class="nav-label">除權息提醒</span>
+        <span class="nav-icon">💰</span><span class="nav-label">除權息紀錄</span>
       </button>
       <button class="nav-item" onclick="showPage('analysis')">
         <span class="nav-icon">📈</span><span class="nav-label">績效分析</span>
@@ -293,7 +293,7 @@ code { font-family: monospace; font-size: 12px; background: var(--bg2); padding:
       <span class="bn-icon">🏦</span><span>質押</span>
     </button>
     <button class="bottom-nav-item" id="bn-dividend" onclick="showPage('dividend')" data-page="dividend">
-      <span class="bn-icon">💰</span><span>除息</span>
+      <span class="bn-icon">💰</span><span>除權息</span>
     </button>
     <button class="bottom-nav-item" onclick="showPage('analysis')" data-page="analysis">
       <span class="bn-icon">📈</span><span>分析</span>
@@ -432,12 +432,71 @@ code { font-family: monospace; font-size: 12px; background: var(--bg2); padding:
     </div>
 
     <!-- 除權息 -->
+    <!-- 除權息紀錄 -->
     <div class="page" id="page-dividend">
-      <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end">
-        <div><div class="page-title">除權息提醒</div><div class="page-sub">追蹤除息日期與預估領息</div></div>
-        <button class="btn btn-primary" onclick="openModal('div-modal')">＋ 新增除權息</button>
+      <div class="page-header">
+        <div class="page-title">除權息紀錄</div>
+        <div class="page-sub">新增配息記錄 · 查看所有除息</div>
       </div>
+
+      <!-- 上方：新增表單 -->
+      <div class="form-section">
+        <div class="form-section-title">新增除權息紀錄</div>
+        <div class="form-grid col3">
+          <div class="form-group ac-wrap">
+            <label>股票代號 <span style="color:#A32D2D">*</span></label>
+            <input id="dv-code" placeholder="輸入代號搜尋" autocomplete="off"
+              oninput="onCodeInput(this.value,'dv')" onblur="hideAC('dv')" onkeydown="onCodeKey(event,'dv')" />
+            <div class="ac-dropdown" id="dv-ac" style="display:none"></div>
+            <div class="name-hint" id="dv-hint"></div>
+          </div>
+          <div class="form-group">
+            <label>名稱</label>
+            <input id="dv-name-show" readonly placeholder="輸入代號後自動帶入" />
+            <input type="hidden" id="dv-name" />
+          </div>
+          <div class="form-group">
+            <label>除息日 <span style="color:#A32D2D">*</span></label>
+            <div class="date-input-wrap">
+              <input type="number" class="date-y" id="dv-exdate-y" placeholder="年" min="2000" max="2099" oninput="datePartInput(this,'dv-exdate-m',4)" />
+              <span class="date-sep">/</span>
+              <input type="number" class="date-m" id="dv-exdate-m" placeholder="月" min="1" max="12" oninput="datePartInput(this,'dv-exdate-d',2)" />
+              <span class="date-sep">/</span>
+              <input type="number" class="date-d" id="dv-exdate-d" placeholder="日" min="1" max="31" oninput="datePartInput(this,'dv-amount',2)" />
+            </div>
+          </div>
+        </div>
+        <div class="form-grid col3">
+          <div class="form-group"><label>配息 (元/股) <span style="color:#A32D2D">*</span></label><input type="number" id="dv-amount" placeholder="1.2" step="0.01" oninput="calcDivNet('dv')" /></div>
+          <div class="form-group"><label>除息股數 <span style="color:#A32D2D">*</span></label><input type="number" id="dv-exshares" placeholder="填入股數" oninput="calcDivNet('dv')" /></div>
+          <div class="form-group"><label>匯費 (元)</label><input type="number" id="dv-remit" placeholder="10" value="10" oninput="calcDivNet('dv')" /></div>
+        </div>
+        <div class="form-grid col3" style="align-items:flex-end">
+          <div class="form-group">
+            <label>預計發放日</label>
+            <div class="date-input-wrap">
+              <input type="number" class="date-y" id="dv-paydate-y" placeholder="年" min="2000" max="2099" oninput="datePartInput(this,'dv-paydate-m',4)" />
+              <span class="date-sep">/</span>
+              <input type="number" class="date-m" id="dv-paydate-m" placeholder="月" min="1" max="12" oninput="datePartInput(this,'dv-paydate-d',2)" />
+              <span class="date-sep">/</span>
+              <input type="number" class="date-d" id="dv-paydate-d" placeholder="日" min="1" max="31" />
+            </div>
+          </div>
+          <div class="form-group"><label>預估實領（自動計算）</label><input type="text" id="dv-net-display" readonly placeholder="填入配息與股數後顯示" /></div>
+          <div style="display:flex;gap:8px;padding-bottom:1px">
+            <button class="btn btn-primary" onclick="saveDiv()" style="flex:1">✓ 新增</button>
+            <button class="btn" onclick="clearDivForm()">清除</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 近期除息提醒 -->
       <div class="alert-list" id="div-alerts"></div>
+
+      <!-- 下方：所有紀錄 -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:15px;font-weight:600;color:var(--text)">所有除權息紀錄</div>
+      </div>
       <div class="table-wrap">
         <table><thead><tr><th>代號</th><th>名稱</th><th>除息日</th><th>配息(元/股)</th><th>除息股數</th><th>毛股息</th><th>匯費</th><th>實領金額</th><th>預計發放日</th><th>操作</th></tr></thead>
         <tbody id="div-table"></tbody></table>
@@ -486,7 +545,7 @@ code { font-family: monospace; font-size: 12px; background: var(--bg2); padding:
           <label class="toggle"><input type="checkbox" id="toggle-pledge" checked onchange="applyNavToggles()"><span class="toggle-slider"></span></label>
         </div>
         <div class="toggle-row">
-          <div><div class="toggle-label">💰 除權息提醒</div><div class="toggle-sub">追蹤除息日期與預估領息</div></div>
+          <div><div class="toggle-label">💰 除權息紀錄</div><div class="toggle-sub">追蹤除息日期與預估領息</div></div>
           <label class="toggle"><input type="checkbox" id="toggle-dividend" checked onchange="applyNavToggles()"><span class="toggle-slider"></span></label>
         </div>
       </div>
@@ -559,36 +618,6 @@ code { font-family: monospace; font-size: 12px; background: var(--bg2); padding:
 </div>
 
 <!-- Modal: 除息 -->
-<div class="modal-overlay" id="div-modal">
-  <div class="modal">
-    <div class="modal-title">新增除權息紀錄</div>
-    <div class="form-grid">
-      <div class="form-group ac-wrap">
-        <label>ETF 代號</label>
-        <input id="dv-code" placeholder="輸入代號搜尋" autocomplete="off"
-          oninput="onCodeInput(this.value,'dv')" onblur="hideAC('dv')" onkeydown="onCodeKey(event,'dv')" />
-        <div class="ac-dropdown" id="dv-ac" style="display:none"></div>
-        <div class="name-hint" id="dv-hint"></div>
-        <input type="hidden" id="dv-name" />
-      </div>
-      <div class="form-group"><label>除息日</label><div class="date-input-wrap"><input type="number" class="date-y" id="dv-exdate-y" placeholder="年" min="2000" max="2099" oninput="datePartInput(this,'dv-exdate-m',4)" /><span class="date-sep">/</span><input type="number" class="date-m" id="dv-exdate-m" placeholder="月" min="1" max="12" oninput="datePartInput(this,'dv-exdate-d',2)" /><span class="date-sep">/</span><input type="number" class="date-d" id="dv-exdate-d" placeholder="日" min="1" max="31" /></div></div>
-    </div>
-    <div class="form-grid col3">
-      <div class="form-group"><label>配息 (元/股)</label><input type="number" id="dv-amount" placeholder="1.2" step="0.01" oninput="calcDivNet('dv')" /></div>
-      <div class="form-group"><label>除息股數</label><input type="number" id="dv-exshares" placeholder="填入股數" oninput="calcDivNet('dv')" /></div>
-      <div class="form-group"><label>匯費 (元)</label><input type="number" id="dv-remit" placeholder="10" value="10" oninput="calcDivNet('dv')" /></div>
-    </div>
-    <div class="form-grid">
-      <div class="form-group"><label>預計發放日</label><div class="date-input-wrap"><input type="number" class="date-y" id="dv-paydate-y" placeholder="年" min="2000" max="2099" oninput="datePartInput(this,'dv-paydate-m',4)" /><span class="date-sep">/</span><input type="number" class="date-m" id="dv-paydate-m" placeholder="月" min="1" max="12" oninput="datePartInput(this,'dv-paydate-d',2)" /><span class="date-sep">/</span><input type="number" class="date-d" id="dv-paydate-d" placeholder="日" min="1" max="31" /></div></div>
-      <div class="form-group"><label>預估實領（自動計算）</label><input type="text" id="dv-net-display" readonly placeholder="填入配息與股數後自動計算" /></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal('div-modal')">取消</button>
-      <button class="btn btn-primary" onclick="saveDiv()">儲存</button>
-    </div>
-  </div>
-</div>
-
 <!-- Modal: 編輯交易 -->
 <div class="modal-overlay" id="edit-trade-modal">
   <div class="modal">
@@ -1259,6 +1288,9 @@ function pickETF(pfx, code) {
 function fillCode(pfx, code, name) {
   const n = document.getElementById(pfx + '-name');
   if (n) { n.value = name; n.readOnly = true; n.style.background=''; n.style.color=''; }
+  // dv uses a separate visible field
+  const ns = document.getElementById(pfx + '-name-show');
+  if (ns) { ns.value = name; }
   const h = document.getElementById(pfx + '-hint'); if (h) h.textContent = name ? '✓ ' + name : '';
 }
 function clearCode(pfx) {
@@ -1624,21 +1656,32 @@ function renderDividend() {
 }
 function saveDiv() {
   const code = document.getElementById('dv-code').value.trim().toUpperCase();
+  const nameEl = document.getElementById('dv-name-show') || document.getElementById('dv-name');
   const info = etfLookup(code);
+  const name = info ? info.name : (nameEl?.value || code);
+  const exdate = getDateVal('dv-exdate');
+  const amount = parseFloat(document.getElementById('dv-amount').value) || 0;
+  const exshares = parseFloat(document.getElementById('dv-exshares').value) || 0;
+  if (!code || !exdate || !amount || !exshares) { toast('⚠️ 請填寫代號、除息日、配息、股數'); return; }
   const d = {
-    id: S.nextId++, code, name: info ? info.name : (document.getElementById('dv-name')?.value || code),
-    exdate: getDateVal('dv-exdate'),
-    amount: parseFloat(document.getElementById('dv-amount').value) || 0,
-    exshares: parseFloat(document.getElementById('dv-exshares').value) || 0,
+    id: S.nextId++, code, name,
+    exdate,
+    amount,
+    exshares,
     remit: parseFloat(document.getElementById('dv-remit').value) ?? 10,
     paydate: getDateVal('dv-paydate')
   };
-  S.dividends.push(d); saveState(); closeModal('div-modal'); renderDividend(); toast('✓ 除權息紀錄已新增');
+  S.dividends.push(d); saveState(); renderDividend(); toast('✓ 除權息紀錄已新增');
+  clearDivForm();
+}
+function clearDivForm() {
   ['dv-code','dv-amount','dv-exshares'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  const nameShow = document.getElementById('dv-name-show'); if(nameShow) nameShow.value='';
+  const nameHid = document.getElementById('dv-name'); if(nameHid) nameHid.value='';
   const remitEl = document.getElementById('dv-remit'); if(remitEl) remitEl.value = '10';
   const netEl = document.getElementById('dv-net-display'); if(netEl) netEl.value = '';
+  const hintEl = document.getElementById('dv-hint'); if(hintEl) hintEl.textContent = '';
   clearDateVal('dv-exdate'); clearDateVal('dv-paydate');
-  document.getElementById('dv-hint').textContent = '';
 }
 function deleteDiv(id) {
   if (!confirm('確定刪除此除權息紀錄？')) return;
@@ -1713,28 +1756,26 @@ function renderAnalysis() {
             <div style="font-size:28px;font-weight:700;color:#0F6E56;letter-spacing:-0.5px">${fmtM(totalReceived)}</div>
             <div style="font-size:12px;color:var(--text2);margin-top:2px">共 ${pastDivs.length} 筆已發放</div>
           </div>
-        </div>
-        ${pastDivs.length > 0 ? `
-        <div style="margin-top:14px;border-top:0.5px solid var(--border);padding-top:12px;display:flex;flex-wrap:wrap;gap:8px">
-          ${pastDivs.map(d => {
-            const gross=(d.exshares||0)*(d.amount||0); const remit=d.remit??10; const net=gross>0?gross-remit:0;
-            return `<div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:6px 12px;font-size:12px">
-              <span style="font-weight:600">${d.code}</span>
-              <span style="color:var(--text2);margin:0 6px">${d.paydate}</span>
-              <span style="color:#0F6E56;font-weight:500">${fmtM(net)}</span>
-            </div>`;}).join('')}
-        </div>` : ''}`;
+        </div>`;
     }
   }
 
   const maxA = Math.max(...h.map(v=>Math.abs(v.ret)), 1);
   document.getElementById('ret-bars').innerHTML = h.map(v =>
     `<div class="chart-bar"><div class="bar-label">${v.code}</div><div class="bar-track"><div class="bar-fill" style="width:${(Math.abs(v.ret)/maxA*100).toFixed(1)}%;background:${v.ret>=0?'#1D9E75':'#A32D2D'}"><span class="bar-val">${v.ret>=0?'+':''}${fmt(v.ret,2)}%</span></div></div></div>`).join('');
-  const totDiv = S.dividends.reduce((a,d) => a + (d.exshares||0)*(d.amount||0), 0);
-  document.getElementById('div-stats').innerHTML = S.dividends.map((d, i) => {
-    const est = (d.exshares||0) * (d.amount||0);
-    return `<div class="chart-bar"><div class="bar-label" style="font-size:11px">${d.code}</div><div class="bar-track"><div class="bar-fill" style="width:${est>0&&totDiv>0?(est/totDiv*100).toFixed(1):0}%;background:${PIE_COLORS[i%PIE_COLORS.length]}"><span class="bar-val">${fmtM(est)}</span></div></div></div>`;
-  }).join('') + `<div style="display:flex;gap:12px;font-size:13px;border-top:0.5px solid var(--border);padding-top:10px;margin-top:8px"><span style="color:var(--text2)">年化殖利率</span><span style="font-weight:600;color:#0F6E56">${fmt(yield_,2)}%</span></div>`;
+
+  // 預估股息收益：依代號合計，每檔只顯示一條
+  const divByCode = {};
+  S.dividends.forEach(d => {
+    const net = Math.max(0, (d.exshares||0)*(d.amount||0) - (d.remit??10));
+    if (!divByCode[d.code]) divByCode[d.code] = { code: d.code, net: 0 };
+    divByCode[d.code].net += net;
+  });
+  const divEntries = Object.values(divByCode).filter(v => v.net > 0).sort((a,b) => b.net - a.net);
+  const totDiv = divEntries.reduce((a, v) => a + v.net, 0);
+  document.getElementById('div-stats').innerHTML = divEntries.map((v, i) =>
+    `<div class="chart-bar"><div class="bar-label" style="font-size:11px">${v.code}</div><div class="bar-track"><div class="bar-fill" style="width:${totDiv>0?(v.net/totDiv*100).toFixed(1):0}%;background:${PIE_COLORS[i%PIE_COLORS.length]}"><span class="bar-val">${fmtM(v.net)}</span></div></div></div>`
+  ).join('') + `<div style="display:flex;gap:12px;font-size:13px;border-top:0.5px solid var(--border);padding-top:10px;margin-top:8px"><span style="color:var(--text2)">年化殖利率</span><span style="font-weight:600;color:#0F6E56">${fmt(yield_,2)}%</span></div>`;
   drawLine();
   drawDivChart();
 }
