@@ -456,7 +456,7 @@ code { font-family: monospace; font-size: 12px; background: var(--bg2); padding:
             <input type="hidden" id="dv-name" />
           </div>
           <div class="form-group">
-            <label>除息日 <span style="color:#A32D2D">*</span></label>
+            <label>除息日</label>
             <div class="date-input-wrap">
               <input type="number" class="date-y" id="dv-exdate-y" placeholder="年" min="2000" max="2099" oninput="datePartInput(this,'dv-exdate-m',4)" />
               <span class="date-sep">/</span>
@@ -1662,7 +1662,7 @@ function saveDiv() {
   const exdate = getDateVal('dv-exdate');
   const amount = parseFloat(document.getElementById('dv-amount').value) || 0;
   const exshares = parseFloat(document.getElementById('dv-exshares').value) || 0;
-  if (!code || !exdate || !amount || !exshares) { toast('⚠️ 請填寫代號、除息日、配息、股數'); return; }
+  if (!code || !amount || !exshares) { toast('⚠️ 請填寫代號、配息、股數'); return; }
   const d = {
     id: S.nextId++, code, name,
     exdate,
