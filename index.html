@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ETF 管家">
+<meta name="theme-color" content="#0F6E56" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1c1c1a" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>ETF 管家</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #ffffff; --bg2: #f5f5f4; --bg3: #ededeb;
+  --text: #1a1a1a; --text2: #666662; --text3: #999994;
+  --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+  --teal: #0F6E56; --teal-dark: #085041; --teal-bg: #E1F5EE; --teal-text: #0F6E56;
+  --blue: #185FA5; --blue-bg: #E6F1FB;
+  --red: #A32D2D; --red-bg: #FCEBEB;
+  --amber: #854F0B; --amber-bg: #FAEEDA;
+  --radius: 8px; --radius-lg: 12px;
+  --shadow: 0 1px 4px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.08);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b;
+    --text: #e8e8e4; --text2: #9a9a94; --text3: #666660;
+    --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.18);
+    --teal-bg: #04342C; --teal-text: #9FE1CB;
+    --blue-bg: #042C53; --red-bg: #501313; --amber-bg: #412402;
+    --shadow: 0 1px 4px rgba(0,0,0,0.3), 0 0 0 0.5px rgba(255,255,255,0.06);
+  }
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; background: var(--bg3); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+/* Layout */
+.shell { display: flex; min-height: 100vh; }
+.sidebar { width: 200px; background: var(--bg); border-right: 0.5px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 10; }
+.sidebar-logo { padding: 20px 16px 12px; border-bottom: 0.5px solid var(--border); }
+.sidebar-logo h1 { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+.sidebar-logo p { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.sidebar-nav { flex: 1; padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius); cursor: pointer; color: var(--text2); font-size: 13px; transition: all .15s; border: none; background: none; width: 100%; text-align: left; }
+.nav-item:hover { background: var(--bg2); color: var(--text); }
+.nav-item.active { background: var(--teal-bg); color: var(--teal-text); font-weight: 500; }
+.nav-icon { font-size: 15px; width: 20px; text-align: center; }
+.sidebar-footer { padding: 10px 8px 16px; border-top: 0.5px solid var(--border); display: flex; flex-direction: column; gap: 4px; }
+.sidebar-btn { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: var(--radius); cursor: pointer; color: var(--text2); font-size: 12px; background: none; border: none; width: 100%; transition: all .15s; }
+.sidebar-btn:hover { background: var(--bg2); color: var(--text); }
+.main { margin-left: 200px; flex: 1; padding: 24px; max-width: calc(100vw - 200px); }
+.page { display: none; }
+.page.active { display: block; }
+.page-header { margin-bottom: 20px; }
+.page-title { font-size: 20px; font-weight: 600; color: var(--text); }
+.page-sub { font-size: 13px; color: var(--text2); margin-top: 3px; }
+/* Cards */
+.card { background: var(--bg); border-radius: var(--radius-lg); border: 0.5px solid var(--border); padding: 16px 18px; margin-bottom: 14px; }
+.card-title { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+/* Metrics */
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 10px; margin-bottom: 16px; }
+.metric { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; }
+.metric-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.metric-val { font-size: 24px; font-weight: 600; letter-spacing: -0.5px; }
+.metric-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.pos { color: #0F6E56; } .neg { color: #A32D2D; }
+/* Tables */
+.table-wrap { overflow-x: auto; border-radius: var(--radius-lg); border: 0.5px solid var(--border); background: var(--bg); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
+th { font-size: 11px; font-weight: 500; color: var(--text3); padding: 10px 12px; border-bottom: 0.5px solid var(--border); text-align: left; background: var(--bg2); text-transform: uppercase; letter-spacing: 0.4px; }
+td { padding: 10px 12px; border-bottom: 0.5px solid var(--border); color: var(--text); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg2); }
+/* Forms */
+.form-section { background: var(--bg); border-radius: var(--radius-lg); border: 0.5px solid var(--border); padding: 20px; margin-bottom: 14px; }
+.form-section-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text); }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.form-grid.col3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-grid.col1 { grid-template-columns: 1fr; }
+.form-group { display: flex; flex-direction: column; gap: 5px; position: relative; }
+.form-group label { font-size: 11px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; }
+input, select, textarea { font-size: 13px; padding: 8px 11px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg); color: var(--text); width: 100%; transition: border-color .15s, box-shadow .15s; }
+input:focus, select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(15,110,86,0.12); }
+input[readonly] { background: var(--bg2); color: var(--text2); cursor: default; }
+/* Buttons */
+.btn { font-size: 13px; font-weight: 500; padding: 8px 16px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg); color: var(--text); cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { background: var(--bg2); }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--teal); color: white; border-color: var(--teal); }
+.btn-primary:hover { background: var(--teal-dark); border-color: var(--teal-dark); }
+.btn-sm { font-size: 12px; padding: 5px 10px; }
+.btn-danger { color: var(--red); border-color: transparent; background: none; }
+.btn-danger:hover { background: var(--red-bg); }
+.btn-edit { color: var(--blue); border-color: transparent; background: none; }
+.btn-edit:hover { background: var(--blue-bg); }
+/* Badges */
+.badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
+.badge-teal { background: var(--teal-bg); color: var(--teal-text); }
+.badge-blue { background: var(--blue-bg); color: var(--blue); }
+.badge-red { background: var(--red-bg); color: var(--red); }
+.badge-amber { background: var(--amber-bg); color: var(--amber); }
+/* Tabs */
+.tabs { display: flex; gap: 2px; background: var(--bg2); padding: 3px; border-radius: var(--radius); display: inline-flex; margin-bottom: 16px; }
+.tab { font-size: 13px; font-weight: 500; padding: 6px 16px; border-radius: 6px; border: none; background: none; color: var(--text2); cursor: pointer; transition: all .15s; }
+.tab.active { background: var(--bg); color: var(--text); box-shadow: var(--shadow); }
+/* Autocomplete */
+.ac-wrap { position: relative; }
+.ac-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius); z-index: 500; max-height: 220px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+.ac-item { padding: 8px 12px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 10px; }
+.ac-item:hover, .ac-item.sel { background: var(--bg2); }
+.ac-code { font-weight: 600; color: var(--text); min-width: 58px; font-size: 13px; }
+.ac-name { color: var(--text2); flex: 1; }
+.ac-cat { font-size: 10px; padding: 1px 6px; border-radius: 10px; background: var(--teal-bg); color: var(--teal-text); white-space: nowrap; }
+.name-hint { font-size: 11px; color: var(--teal); margin-top: 3px; min-height: 14px; font-weight: 500; }
+/* Alert cards */
+.alert-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.alert-card { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: var(--radius); border: 0.5px solid var(--border); background: var(--bg); }
+.alert-body { flex: 1; }
+.alert-title { font-size: 13px; font-weight: 600; }
+.alert-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--bg); border-radius: var(--radius-lg); padding: 24px; width: 100%; max-width: 460px; border: 0.5px solid var(--border2); box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 18px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 0.5px solid var(--border); }
+/* Charts */
+.chart-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+.bar-label { font-size: 12px; color: var(--text2); width: 56px; text-align: right; flex-shrink: 0; }
+.bar-track { flex: 1; height: 22px; background: var(--bg2); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; transition: width .5s ease; }
+.bar-val { font-size: 11px; font-weight: 500; color: white; white-space: nowrap; }
+/* Two-col grid */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+/* Pie + legend */
+.pie-wrap { display: flex; align-items: center; gap: 20px; }
+.legend { display: flex; flex-direction: column; gap: 8px; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+/* Toast */
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: var(--radius); font-size: 13px; font-weight: 500; z-index: 9999; opacity: 0; transform: translateY(8px); transition: all .2s; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateY(0); }
+/* Divider */
+.divider { height: 0.5px; background: var(--border); margin: 14px 0; }
+/* Data mgmt */
+.data-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+/* Empty state */
+.empty { text-align: center; padding: 48px 24px; color: var(--text3); }
+.empty-icon { font-size: 32px; margin-bottom: 8px; }
+.empty p { font-size: 13px; }
+/* Responsive – iPhone bottom nav */
+.bottom-nav { display: none; }
+
+/* ── iPad 直向 / 小平板 (481–1024px) ── */
+@media (max-width: 1024px) and (min-width: 481px) {
+  .sidebar { width: 64px; }
+  .nav-label, .sidebar-logo p, .sidebar-logo h1 { display: none; }
+  .sidebar-logo { padding: 16px 12px 10px; display:flex; justify-content:center; }
+  .nav-item { justify-content: center; padding: 10px 0; }
+  .nav-icon { width: 24px; font-size: 18px; }
+  .sidebar-footer { padding: 8px 6px 12px; }
+  .sidebar-btn { justify-content: center; padding: 8px 0; }
+  .main { margin-left: 64px; padding: 20px 16px; max-width: calc(100vw - 64px); }
+  .grid2 { grid-template-columns: 1fr 1fr; }
+  .form-grid.col3 { grid-template-columns: 1fr 1fr; }
+  .metric-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── iPhone / 小手機 (≤480px) ── */
+@media (max-width: 480px) {
+  .sidebar { display: none; }
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--bg);
+    border-top: 0.5px solid var(--border);
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: max(env(safe-area-inset-bottom), 8px);
+  }
+  .bottom-nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    gap: 2px; padding: 8px 4px 6px;
+    background: none; border: none; cursor: pointer;
+    color: var(--text3); font-size: 10px; transition: color .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .bottom-nav-item .bn-icon { font-size: 20px; line-height: 1; }
+  .bottom-nav-item.active { color: var(--teal); }
+  .bottom-nav-item.active .bn-icon { transform: scale(1.1); }
+  .main {
+    margin-left: 0;
+    padding: 16px 14px;
+    padding-top: calc(16px + env(safe-area-inset-top));
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+    max-width: 100vw;
+  }
+  .grid2 { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-grid.col3 { grid-template-columns: 1fr 1fr; }
+  .metric-grid { grid-template-columns: 1fr 1fr; }
+  .page-title { font-size: 18px; }
+  table { font-size: 12px; }
+  th, td { padding: 8px 8px; }
+  .modal { padding: 18px 16px; margin: 12px; max-width: calc(100vw - 24px); }
+  .pie-wrap { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .sidebar-footer { display: none; }
+}
+
+/* PWA safe area for notch/Dynamic Island */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .sidebar { padding-top: env(safe-area-inset-top); }
+}
+
+/* Code tag */
+code { font-family: monospace; font-size: 12px; background: var(--bg2); padding: 1px 5px; border-radius: 4px; }
+/* Toggle switch */
+.toggle-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:0.5px solid var(--border); }
+.toggle-row:last-child { border-bottom:none; }
+.toggle-label { font-size:13px; color:var(--text); }
+.toggle-sub { font-size:11px; color:var(--text3); margin-top:2px; }
+.toggle { position:relative; width:40px; height:22px; flex-shrink:0; }
+.toggle input { opacity:0; width:0; height:0; }
+.toggle-slider { position:absolute; inset:0; background:var(--bg3); border-radius:11px; cursor:pointer; transition:.2s; border:0.5px solid var(--border2); }
+.toggle-slider:before { content:''; position:absolute; width:16px; height:16px; left:2px; top:2px; background:white; border-radius:50%; transition:.2s; box-shadow:0 1px 3px rgba(0,0,0,0.2); }
+.toggle input:checked + .toggle-slider { background:#0F6E56; border-color:#0F6E56; }
+.toggle input:checked + .toggle-slider:before { transform:translateX(18px); }
+/* Custom date input */
+.date-input-wrap { display: flex; align-items: center; gap: 4px; }
+.date-input-wrap input[type="number"] { text-align: center; -moz-appearance: textfield; padding: 8px 6px; }
+.date-input-wrap input[type="number"]::-webkit-inner-spin-button,
+.date-input-wrap input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+.date-sep { color: var(--text3); font-size: 14px; flex-shrink: 0; user-select: none; }
+.date-y { width: 62px !important; }
+.date-m { width: 40px !important; }
+.date-d { width: 40px !important; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>ETF 管家</h1>
+      <p>台股 ETF 庫存管理</p>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showPage('overview')">
+        <span class="nav-icon">📊</span><span class="nav-label">庫存總覽</span>
+      </button>
+      <button class="nav-item" onclick="showPage('add-trade')">
+        <span class="nav-icon">➕</span><span class="nav-label">交易</span>
+      </button>
+      <button class="nav-item" id="nav-pledge" onclick="showPage('pledge')">
+        <span class="nav-icon">🏦</span><span class="nav-label">質押紀錄</span>
+      </button>
+      <button class="nav-item" id="nav-dividend" onclick="showPage('dividend')">
+        <span class="nav-icon">💰</span><span class="nav-label">除權息提醒</span>
+      </button>
+      <button class="nav-item" onclick="showPage('analysis')">
+        <span class="nav-icon">📈</span><span class="nav-label">績效分析</span>
+      </button>
+      <button class="nav-item" onclick="showPage('settings')">
+        <span class="nav-icon">⚙️</span><span class="nav-label">設定 / 備份</span>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="sidebar-btn" onclick="exportJSON()">
+        <span>⬇️</span><span class="nav-label">匯出備份</span>
+      </button>
+      <button class="sidebar-btn" onclick="document.getElementById('import-file').click()">
+        <span>⬆️</span><span class="nav-label">匯入還原</span>
+      </button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)">
+    </div>
+  </aside>
+
+  <!-- iPhone 底部導航 -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <button class="bottom-nav-item active" onclick="showPage('overview')" data-page="overview">
+      <span class="bn-icon">📊</span><span>總覽</span>
+    </button>
+    <button class="bottom-nav-item" onclick="showPage('add-trade')" data-page="add-trade">
+      <span class="bn-icon">➕</span><span>交易</span>
+    </button>
+    <button class="bottom-nav-item" id="bn-pledge" onclick="showPage('pledge')" data-page="pledge">
+      <span class="bn-icon">🏦</span><span>質押</span>
+    </button>
+    <button class="bottom-nav-item" id="bn-dividend" onclick="showPage('dividend')" data-page="dividend">
+      <span class="bn-icon">💰</span><span>除息</span>
+    </button>
+    <button class="bottom-nav-item" onclick="showPage('analysis')" data-page="analysis">
+      <span class="bn-icon">📈</span><span>分析</span>
+    </button>
+    <button class="bottom-nav-item" onclick="showPage('settings')" data-page="settings">
+      <span class="bn-icon">⚙️</span><span>設定</span>
+    </button>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- 庫存總覽 -->
+    <div class="page active" id="page-overview">
+      <div class="page-header">
+        <div class="page-title">庫存總覽</div>
+        <div class="page-sub">所有持股即時損益</div>
+      </div>
+      <div class="metric-grid" id="overview-metrics"></div>
+      <div class="grid2">
+        <div class="card">
+        <div class="card-title">資產配置（按股數）</div>
+          <div class="pie-wrap">
+            <canvas id="pieChart" width="130" height="130"></canvas>
+            <div class="legend" id="pie-legend"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">持倉成本分佈</div>
+          <div id="cost-bars"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div>
+            <div class="card-title" style="margin-bottom:2px">現價更新</div>
+            <div style="font-size:11px;color:var(--text3)">手動更新各 ETF 的現價，以計算正確的損益與報酬率。</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveOverviewPrices()">✓ 儲存現價</button>
+        </div>
+        <div id="overview-price-inputs" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px"></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>代號</th><th>名稱</th><th>股數</th><th>均價</th><th>總成本</th><th>現價</th><th>市值</th><th>未實現損益</th><th>報酬率</th></tr></thead>
+          <tbody id="holdings-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 交易（新增 + 紀錄合併） -->
+    <div class="page" id="page-add-trade">
+      <div class="page-header">
+        <div class="page-title">交易</div>
+        <div class="page-sub">新增買賣記錄 · 查看所有交易</div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('buy')">一般買入</button>
+        <button class="tab" onclick="switchTab('dca')">定期定額</button>
+        <button class="tab" onclick="switchTab('sell')">賣出</button>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title" id="trade-form-title">新增買入紀錄</div>
+        <!-- 第一列：成交日期 / ETF代號 / ETF名稱 -->
+        <div class="form-grid col3">
+          <div class="form-group"><label>成交日期 <span style="color:#A32D2D">*</span></label><div class="date-input-wrap"><input type="number" class="date-y" id="tf-date-y" placeholder="年" min="2000" max="2099" oninput="datePartInput(this,'tf-date-m',4)" /><span class="date-sep">/</span><input type="number" class="date-m" id="tf-date-m" placeholder="月" min="1" max="12" oninput="datePartInput(this,'tf-date-d',2)" /><span class="date-sep">/</span><input type="number" class="date-d" id="tf-date-d" placeholder="日" min="1" max="31" oninput="datePartInput(this,'tf-code',2)" /></div></div>
+          <div class="form-group ac-wrap">
+            <label>ETF 代號 <span style="color:#A32D2D">*</span></label>
+            <input id="tf-code" placeholder="輸入代號或名稱搜尋" autocomplete="off"
+              oninput="onCodeInput(this.value,'tf')"
+              onblur="hideAC('tf')"
+              onkeydown="onCodeKey(event,'tf')" />
+            <div class="ac-dropdown" id="tf-ac" style="display:none"></div>
+            <div class="name-hint" id="tf-hint"></div>
+          </div>
+          <div class="form-group">
+            <label>ETF 名稱</label>
+            <input id="tf-name" readonly placeholder="輸入代號後自動帶入" />
+          </div>
+        </div>
+        <!-- 第二列：股數 / 成交價 / 手續費 -->
+        <div class="form-grid col3">
+          <div class="form-group"><label id="tf-shares-label">股數 <span style="color:#A32D2D">*</span></label><input type="number" id="tf-shares" placeholder="1000" min="1" /></div>
+          <div class="form-group"><label>成交價 <span style="color:#A32D2D">*</span></label><input type="number" id="tf-price" placeholder="150.00" step="0.01" /></div>
+          <div class="form-group"><label>手續費 (元)</label><input type="number" id="tf-fee" placeholder="20" /></div>
+        </div>
+        <!-- 定期定額額外欄位 -->
+        <div class="form-grid" id="dca-extra" style="display:none">
+          <div class="form-group">
+            <label>扣款頻率</label>
+            <select id="tf-freq"><option value="monthly">每月</option><option value="weekly">每週</option><option value="quarterly">每季</option></select>
+          </div>
+          <div class="form-group"><label>下次扣款日</label><div class="date-input-wrap"><input type="number" class="date-y" id="tf-nextdate-y" placeholder="年" min="2000" max="2099" oninput="datePartInput(this,'tf-nextdate-m',4)" /><span class="date-sep">/</span><input type="number" class="date-m" id="tf-nextdate-m" placeholder="月" min="1" max="12" oninput="datePartInput(this,'tf-nextdate-d',2)" /><span class="date-sep">/</span><input type="number" class="date-d" id="tf-nextdate-d" placeholder="日" min="1" max="31" /></div></div>
+        </div>
+        <!-- 第三列：備註 / 按鈕 -->
+        <div class="form-grid col3" style="align-items:flex-end">
+          <div class="form-group"><label>備註</label><input id="tf-note" placeholder="選填" /></div>
+          <div style="display:flex;gap:8px;padding-bottom:1px">
+            <button class="btn btn-primary" onclick="addTrade()" style="flex:1">✓ 新增交易</button>
+            <button class="btn" onclick="clearTradeForm()">清除</button>
+          </div>
+          <div></div>
+        </div>
+      </div>
+
+      <!-- 交易紀錄（合併在此） -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;margin-top:4px">
+        <div style="font-size:15px;font-weight:600;color:var(--text)">交易紀錄</div>
+        <div style="display:flex;gap:8px">
+          <select id="f-code" onchange="renderTrades()" style="font-size:13px;padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg);color:var(--text)"><option value="">全部 ETF</option></select>
+          <select id="f-type" onchange="renderTrades()" style="font-size:13px;padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg);color:var(--text)">
+            <option value="">全部類型</option><option value="buy">買入</option><option value="dca">定期定額</option><option value="sell">賣出</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>日期</th><th>代號</th><th>名稱</th><th>類型</th><th>股數</th><th>成交價</th><th>手續費</th><th>總成本（含費）</th><th>備註</th><th>操作</th></tr></thead>
+        <tbody id="trades-table"></tbody></table>
+      </div>
+    </div>
+
+    <!-- 舊的 trades 頁保留空殼供 showPage 不報錯 -->
+    <div class="page" id="page-trades" style="display:none!important"></div>
+
+    <!-- 質押紀錄 -->
+    <div class="page" id="page-pledge">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end">
+        <div><div class="page-title">質押紀錄</div><div class="page-sub">ETF 股票質押借款管理</div></div>
+        <button class="btn btn-primary" onclick="openModal('pledge-modal')">＋ 新增質押</button>
+      </div>
+      <div class="metric-grid" id="pledge-metrics"></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>代號</th><th>名稱</th><th>擔保品張數</th><th>質押日期</th><th>到期日</th><th>年利率</th><th>可借款額度</th><th>動用額度</th><th>維持率</th><th>狀態</th><th>操作</th></tr></thead>
+        <tbody id="pledge-table"></tbody></table>
+      </div>
+    </div>
+
+    <!-- 除權息 -->
+    <div class="page" id="page-dividend">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end">
+        <div><div class="page-title">除權息提醒</div><div class="page-sub">追蹤除息日期與預估領息</div></div>
+        <button class="btn btn-primary" onclick="openModal('div-modal')">＋ 新增除權息</button>
+      </div>
+      <div class="alert-list" id="div-alerts"></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>代號</th><th>名稱</th><th>除息日</th><th>配息(元/股)</th><th>除息股數</th><th>毛股息</th><th>匯費</th><th>實領金額</th><th>預計發放日</th><th>操作</th></tr></thead>
+        <tbody id="div-table"></tbody></table>
+      </div>
+    </div>
+
+    <!-- 績效分析 -->
+    <div class="page" id="page-analysis">
+      <div class="page-header"><div class="page-title">績效分析</div><div class="page-sub">投資組合整體表現</div></div>
+      <div class="metric-grid" id="perf-metrics"></div>
+      <div class="card" id="received-div-card" style="margin-bottom:14px"></div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">各 ETF 報酬率</div>
+          <div id="ret-bars"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">預估股息收益</div>
+          <div id="div-stats"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">月度買入成本</div>
+        <div style="position:relative;height:200px"><canvas id="line-chart" role="img" aria-label="月度買入成本折線圖"></canvas></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div class="card-title" style="margin-bottom:0">股息收入統計</div>
+          <div style="display:flex;gap:4px;background:var(--bg2);padding:3px;border-radius:var(--radius)">
+            <button id="div-chart-year-btn" class="tab active" onclick="setDivChartMode('year')" style="font-size:12px;padding:4px 12px">年</button>
+            <button id="div-chart-month-btn" class="tab" onclick="setDivChartMode('month')" style="font-size:12px;padding:4px 12px">月</button>
+          </div>
+        </div>
+        <div style="position:relative;height:220px"><canvas id="div-bar-chart" role="img" aria-label="股息收入統計圖"></canvas></div>
+      </div>
+    </div>
+
+    <!-- 設定/備份 -->
+    <div class="page" id="page-settings">
+      <div class="page-header"><div class="page-title">設定 / 備份</div><div class="page-sub">功能開關與資料管理</div></div>
+      <div class="form-section">
+        <div class="form-section-title">側邊欄功能開關</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:14px">關閉後該功能不會顯示在側邊欄，但既有資料不受影響。</p>
+        <div class="toggle-row">
+          <div><div class="toggle-label">🏦 質押紀錄</div><div class="toggle-sub">ETF 股票質押借款管理</div></div>
+          <label class="toggle"><input type="checkbox" id="toggle-pledge" checked onchange="applyNavToggles()"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">💰 除權息提醒</div><div class="toggle-sub">追蹤除息日期與預估領息</div></div>
+          <label class="toggle"><input type="checkbox" id="toggle-dividend" checked onchange="applyNavToggles()"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">資料備份與還原</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:14px">
+          所有資料儲存於瀏覽器 <code>localStorage</code>，清除瀏覽器資料前請先匯出備份。
+        </p>
+        <div class="data-actions">
+          <button class="btn btn-primary" onclick="exportJSON()">⬇️ 匯出 JSON 備份</button>
+          <button class="btn" onclick="document.getElementById('import-file2').click()">⬆️ 匯入 JSON 還原</button>
+          <input type="file" id="import-file2" accept=".json" style="display:none" onchange="importJSON(event)">
+          <button class="btn" onclick="exportCSV()">📄 匯出交易記錄 CSV</button>
+        </div>
+        <div class="divider"></div>
+        <div>
+          <button class="btn btn-danger" onclick="clearAllData()">🗑️ 清除所有資料</button>
+          <span style="font-size:12px;color:var(--text3);margin-left:10px">此操作無法復原，請先備份</span>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">股票名稱快取</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:12px">輸入非 ETF 代號時，系統會自動向 Yahoo Finance 查詢股票名稱並儲存於此。</p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span id="stock-cache-info" style="font-size:13px;color:var(--text2)">目前快取：0 筆</span>
+          <button class="btn btn-sm" onclick="clearStockCache()">清除快取</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Modal: 質押 -->
+<div class="modal-overlay" id="pledge-modal">
+  <div class="modal">
+    <div class="modal-title" id="pledge-modal-title">新增質押紀錄</div>
+    <div class="form-grid">
+      <div class="form-group ac-wrap">
+        <label>ETF 代號 <span style="color:#A32D2D">*</span></label>
+        <input id="pm-code" placeholder="輸入代號搜尋" autocomplete="off"
+          oninput="onCodeInput(this.value,'pm')" onblur="hideAC('pm')" onkeydown="onCodeKey(event,'pm')" />
+        <div class="ac-dropdown" id="pm-ac" style="display:none"></div>
+        <div class="name-hint" id="pm-hint"></div>
+        <input type="hidden" id="pm-name" />
+      </div>
+      <div class="form-group"><label>擔保品張數 <span style="color:#A32D2D">*</span></label><input type="number" id="pm-lots" placeholder="5" min="1" /></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>質押日期 <span style="color:#A32D2D">*</span></label><div class="date-input-wrap"><input type="number" class="date-y" id="pm-date-y" placeholder="年" min="2000" max="2099" oninput="datePartInput(this,'pm-date-m',4)" /><span class="date-sep">/</span><input type="number" class="date-m" id="pm-date-m" placeholder="月" min="1" max="12" oninput="datePartInput(this,'pm-date-d',2)" /><span class="date-sep">/</span><input type="number" class="date-d" id="pm-date-d" placeholder="日" min="1" max="31" oninput="datePartInput(this,'pm-expiry-y',2)" /></div></div>
+      <div class="form-group"><label>到期日</label><div class="date-input-wrap"><input type="number" class="date-y" id="pm-expiry-y" placeholder="年" min="2000" max="2099" oninput="datePartInput(this,'pm-expiry-m',4)" /><span class="date-sep">/</span><input type="number" class="date-m" id="pm-expiry-m" placeholder="月" min="1" max="12" oninput="datePartInput(this,'pm-expiry-d',2)" /><span class="date-sep">/</span><input type="number" class="date-d" id="pm-expiry-d" placeholder="日" min="1" max="31" /></div></div>
+    </div>
+    <div class="form-grid col3">
+      <div class="form-group"><label>年利率 (%) <span style="color:#A32D2D">*</span></label><input type="number" id="pm-rate" placeholder="1.8" step="0.1" /></div>
+      <div class="form-group"><label>可借款額度</label><input type="number" id="pm-credit" placeholder="500000" oninput="calcMaintain('pm')" /></div>
+      <div class="form-group"><label>動用額度 <span style="color:#A32D2D">*</span></label><input type="number" id="pm-amount" placeholder="350000" oninput="calcMaintain('pm')" /></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>維持率（自動計算）</label><input type="text" id="pm-maintain-display" readonly placeholder="填入額度後自動計算" /></div>
+      <div class="form-group"><label>擔保品市值（估算用）</label><input type="number" id="pm-collateral" placeholder="選填，用於維持率計算" oninput="calcMaintain('pm')" /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('pledge-modal')">取消</button>
+      <button class="btn btn-primary" onclick="savePledge()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: 除息 -->
+<div class="modal-overlay" id="div-modal">
+  <div class="modal">
+    <div class="modal-title">新增除權息紀錄</div>
+    <div class="form-grid">
+      <div class="form-group ac-wrap">
+        <label>ETF 代號</label>
+        <input id="dv-code" placeholder="輸入代號搜尋" autocomplete="off"
+          oninput="onCodeInput(this.value,'dv')" onblur="hideAC('dv')" onkeydown="onCodeKey(event,'dv')" />
+        <div class="ac-dropdown" id="dv-ac" style="display:none"></div>
+        <div class="name-hint" id="dv-hint"></div>
+        <input type="hidden" id="dv-name" />
+      </div>
+      <div class="form-group"><label>除息日</label><div class="date-input-wrap"><input type="number" class="date-y" id="dv-exdate-y" placeholder="年" min="2000" max="2099" oninput="datePartInput(this,'dv-exdate-m',4)" /><span class="date-sep">/</span><input type="number" class="date-m" id="dv-exdate-m" placeholder="月" min="1" max="12" oninput="datePartInput(this,'dv-exdate-d',2)" /><span class="date-sep">/</span><input type="number" class="date-d" id="dv-exdate-d" placeholder="日" min="1" max="31" /></div></div>
+    </div>
+    <div class="form-grid col3">
+      <div class="form-group"><label>配息 (元/股)</label><input type="number" id="dv-amount" placeholder="1.2" step="0.01" oninput="calcDivNet('dv')" /></div>
+      <div class="form-group"><label>除息股數</label><input type="number" id="dv-exshares" placeholder="填入股數" oninput="calcDivNet('dv')" /></div>
+      <div class="form-group"><label>匯費 (元)</label><input type="number" id="dv-remit" placeholder="10" value="10" oninput="calcDivNet('dv')" /></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>預計發放日</label><div class="date-input-wrap"><input type="number" class="date-y" id="dv-paydate-y" placeholder="年" min="2000" max="2099" oninput="datePartInput(this,'dv-paydate-m',4)" /><span class="date-sep">/</span><input type="number" class="date-m" id="dv-paydate-m" placeholder="月" min="1" max="12" oninput="datePartInput(this,'dv-paydate-d',2)" /><span class="date-sep">/</span><input type="number" class="date-d" id="dv-paydate-d" placeholder="日" min="1" max="31" /></div></div>
+      <div class="form-group"><label>預估實領（自動計算）</label><input type="text" id="dv-net-display" readonly placeholder="填入配息與股數後自動計算" /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('div-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveDiv()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: 編輯交易 -->
+<div class="modal-overlay" id="edit-trade-modal">
+  <div class="modal">
+    <div class="modal-title">編輯交易紀錄</div>
+    <input type="hidden" id="et-id" />
+    <div class="form-grid">
+      <div class="form-group"><label>日期</label><div class="date-input-wrap"><input type="number" class="date-y" id="et-date-y" placeholder="年" min="2000" max="2099" oninput="datePartInput(this,'et-date-m',4)" /><span class="date-sep">/</span><input type="number" class="date-m" id="et-date-m" placeholder="月" min="1" max="12" oninput="datePartInput(this,'et-date-d',2)" /><span class="date-sep">/</span><input type="number" class="date-d" id="et-date-d" placeholder="日" min="1" max="31" /></div></div>
+      <div class="form-group"><label>類型</label>
+        <select id="et-type"><option value="buy">買入</option><option value="dca">定期定額</option><option value="sell">賣出</option></select>
+      </div>
+    </div>
+    <div class="form-grid col3">
+      <div class="form-group"><label>股數</label><input type="number" id="et-shares" /></div>
+      <div class="form-group"><label>成交價</label><input type="number" id="et-price" step="0.01" /></div>
+      <div class="form-group"><label>手續費</label><input type="number" id="et-fee" /></div>
+    </div>
+    <div class="form-grid col1">
+      <div class="form-group"><label>備註</label><input id="et-note" /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('edit-trade-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveEditTrade()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: 編輯質押 -->
+<div class="modal-overlay" id="edit-pledge-modal">
+  <div class="modal">
+    <div class="modal-title">編輯質押紀錄</div>
+    <input type="hidden" id="ep-id" />
+    <div class="form-grid">
+      <div class="form-group"><label>張數</label><input type="number" id="ep-lots" /></div>
+      <div class="form-group"><label>利率 (%)</label><input type="number" id="ep-rate" step="0.1" /></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>可借款額度</label><input type="number" id="ep-credit" oninput="calcMaintain('ep')" /></div>
+      <div class="form-group"><label>動用額度</label><input type="number" id="ep-amount" oninput="calcMaintain('ep')" /></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>維持率（自動計算）</label><input type="text" id="ep-maintain-display" readonly /></div>
+      <div class="form-group"><label>擔保品市值（估算用）</label><input type="number" id="ep-collateral" oninput="calcMaintain('ep')" /></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>到期日</label><div class="date-input-wrap"><input type="number" class="date-y" id="ep-expiry-y" placeholder="年" min="2000" max="2099" oninput="datePartInput(this,'ep-expiry-m',4)" /><span class="date-sep">/</span><input type="number" class="date-m" id="ep-expiry-m" placeholder="月" min="1" max="12" oninput="datePartInput(this,'ep-expiry-d',2)" /><span class="date-sep">/</span><input type="number" class="date-d" id="ep-expiry-d" placeholder="日" min="1" max="31" /></div></div>
+      <div class="form-group"><label>狀態</label>
+        <select id="ep-status"><option value="active">質押中</option><option value="closed">已解除</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('edit-pledge-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveEditPledge()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: 編輯除息 -->
+<div class="modal-overlay" id="edit-div-modal">
+  <div class="modal">
+    <div class="modal-title">編輯除權息紀錄</div>
+    <input type="hidden" id="ed-id" />
+    <div class="form-grid">
+      <div class="form-group"><label>除息日</label><div class="date-input-wrap"><input type="number" class="date-y" id="ed-date-y" placeholder="年" min="2000" max="2099" oninput="datePartInput(this,'ed-date-m',4)" /><span class="date-sep">/</span><input type="number" class="date-m" id="ed-date-m" placeholder="月" min="1" max="12" oninput="datePartInput(this,'ed-date-d',2)" /><span class="date-sep">/</span><input type="number" class="date-d" id="ed-date-d" placeholder="日" min="1" max="31" /></div></div>
+      <div class="form-group"><label>配息 (元/股)</label><input type="number" id="ed-amount" step="0.01" /></div>
+    </div>
+    <div class="form-grid col3">
+      <div class="form-group"><label>除息股數</label><input type="number" id="ed-exshares" /></div>
+      <div class="form-group"><label>匯費 (元)</label><input type="number" id="ed-remit" placeholder="10" /></div>
+      <div class="form-group"><label>預計發放日</label><div class="date-input-wrap"><input type="number" class="date-y" id="ed-paydate-y" placeholder="年" min="2000" max="2099" oninput="datePartInput(this,'ed-paydate-m',4)" /><span class="date-sep">/</span><input type="number" class="date-m" id="ed-paydate-m" placeholder="月" min="1" max="12" oninput="datePartInput(this,'ed-paydate-d',2)" /><span class="date-sep">/</span><input type="number" class="date-d" id="ed-paydate-d" placeholder="日" min="1" max="31" /></div></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('edit-div-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveEditDiv()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── ETF 資料庫 ──────────────────────────────────────
+const ETF_DB = {
+  '0050':{'name':'元大台灣50','cat':'寬基'},'0051':{'name':'元大中型100','cat':'寬基'},
+  '0052':{'name':'富邦科技','cat':'科技'},'0053':{'name':'元大電子','cat':'科技'},
+  '0055':{'name':'元大MSCI金融','cat':'金融'},'0056':{'name':'元大高股息','cat':'高股息'},
+  '0057':{'name':'富邦摩台','cat':'寬基'},'0058':{'name':'富邦發達','cat':'寬基'},
+  '006208':{'name':'富邦台50','cat':'寬基'},'00631L':{'name':'元大台灣50正2','cat':'槓桿'},
+  '00632R':{'name':'元大台灣50反1','cat':'反向'},'00636':{'name':'國泰臺灣加權','cat':'寬基'},
+  '00641':{'name':'元大S&P500','cat':'海外'},'00646':{'name':'元大S&P500','cat':'海外'},
+  '00656':{'name':'國泰費城半導體','cat':'科技'},'00662':{'name':'富邦NASDAQ','cat':'科技'},
+  '00679B':{'name':'元大美債20年','cat':'債券'},'00680B':{'name':'富邦美債10年','cat':'債券'},
+  '00681B':{'name':'元大投資級公司債','cat':'債券'},'00690':{'name':'兆豐台灣藍籌30','cat':'寬基'},
+  '00692':{'name':'富邦公司債','cat':'債券'},'00700':{'name':'富邦台灣優質高息','cat':'高股息'},
+  '00701':{'name':'國泰股利精選30','cat':'高股息'},'00713':{'name':'元大台灣高息低波','cat':'高股息'},
+  '00720B':{'name':'元大投資級金融債','cat':'債券'},'00730':{'name':'富邦臺灣優質高息','cat':'高股息'},
+  '00733':{'name':'富邦臺灣中小','cat':'寬基'},'00734':{'name':'國泰台灣動能高息低波','cat':'高股息'},
+  '00750':{'name':'元大臺灣ESG永續','cat':'ESG'},'00757':{'name':'統一FANG+','cat':'科技'},
+  '00762':{'name':'元大全球消費成長','cat':'海外'},'00770':{'name':'富邦全球優化高股息','cat':'高股息'},
+  '00772B':{'name':'中信高評級公司債','cat':'債券'},'00774B':{'name':'中信美國公債20年','cat':'債券'},
+  '00781':{'name':'永豐優息存股','cat':'高股息'},'00782':{'name':'富邦台灣產業龍頭存股','cat':'高股息'},
+  '00784':{'name':'國泰台灣ESG','cat':'ESG'},'00790':{'name':'富邦S&P500','cat':'海外'},
+  '00793':{'name':'元大台灣ESG低碳50','cat':'ESG'},'00830':{'name':'國泰費城半導體(QQQ)','cat':'科技'},
+  '00831':{'name':'復華S&P500','cat':'海外'},'00836':{'name':'國泰台灣半導體龍頭','cat':'科技'},
+  '00838':{'name':'凱基優選高股息30','cat':'高股息'},'00850':{'name':'元大臺灣ESG永續','cat':'ESG'},
+  '00851':{'name':'台新臺灣AI半導體龍頭','cat':'科技'},'00855':{'name':'華南永昌ESG高息龍頭','cat':'ESG'},
+  '00857':{'name':'永豐台灣ESG','cat':'ESG'},'00858':{'name':'永豐ESG低碳高息','cat':'ESG'},
+  '00861':{'name':'元大全球品牌50','cat':'海外'},'00868':{'name':'中信ESG永續高股息','cat':'ESG'},
+  '00875':{'name':'國泰智能電動車','cat':'主題'},'00876':{'name':'元大全球AI','cat':'科技'},
+  '00878':{'name':'國泰永續高股息','cat':'高股息'},'00879':{'name':'富邦台灣優質高息','cat':'高股息'},
+  '00881':{'name':'國泰台灣5G+','cat':'科技'},'00883':{'name':'國泰入息優選','cat':'高股息'},
+  '00884':{'name':'國泰低波動高息','cat':'高股息'},'00885':{'name':'富邦全球優化高股息','cat':'高股息'},
+  '00887':{'name':'國泰台灣人工智慧','cat':'科技'},'00888':{'name':'永豐台灣優質高息','cat':'高股息'},
+  '00889':{'name':'中信關鍵半導體','cat':'科技'},'00891':{'name':'中信台灣智慧50','cat':'科技'},
+  '00892':{'name':'富邦台灣半導體','cat':'科技'},'00895':{'name':'富邦未來車','cat':'主題'},
+  '00896':{'name':'中信特別半導體','cat':'科技'},'00900':{'name':'富邦特選高股息30','cat':'高股息'},
+  '00901':{'name':'永豐創新科技ETF','cat':'科技'},'00904':{'name':'新光臺灣半導體30','cat':'科技'},
+  '00909':{'name':'凱基優選半導體30','cat':'科技'},'00912':{'name':'中信臺灣智慧能源','cat':'ESG'},
+  '00913':{'name':'兆豐台灣晶圓製造','cat':'科技'},'00914':{'name':'中信臺灣科技優息','cat':'科技'},'00915':{'name':'凱基優選高股息30','cat':'高股息'},
+  '00916':{'name':'國泰莫尼塔台灣動能','cat':'寬基'},'00917':{'name':'中信特選高息小型股','cat':'高股息'},
+  '00918':{'name':'大華優利高填息30','cat':'高股息'},'00919':{'name':'群益台灣精選高息','cat':'高股息'},
+  '00920':{'name':'富邦台灣核心半導體','cat':'科技'},'00921':{'name':'兆豐台灣藍籌貴族','cat':'高股息'},
+  '00922':{'name':'國泰台灣領袖50','cat':'寬基'},'00924':{'name':'兆豐永續高息等權','cat':'高股息'},
+  '00927':{'name':'凱基優選高息低波30','cat':'高股息'},'00928':{'name':'中信半導體','cat':'科技'},
+  '00929':{'name':'復華台灣科技優息','cat':'科技'},'00930':{'name':'永豐ESG永續優質','cat':'ESG'},
+  '00934':{'name':'中信成長高息','cat':'高股息'},'00936':{'name':'台新臺灣高息動能','cat':'高股息'},
+  '00938':{'name':'永豐全球AI半導體','cat':'科技'},'00939':{'name':'統一台灣高息動能','cat':'高股息'},
+  '00940':{'name':'元大台灣價值高息','cat':'高股息'},'00943':{'name':'元大台灣500','cat':'寬基'},
+  '00946':{'name':'富邦台灣中小高息','cat':'高股息'},'00948':{'name':'凱基高息龍頭50','cat':'高股息'},
+  '00950':{'name':'復華台灣科技優先股','cat':'高股息'},'00951':{'name':'中信臺灣優息存股','cat':'高股息'},
+  '00952':{'name':'永豐全球AI人工智慧','cat':'科技'},'00955':{'name':'元大AI精英30','cat':'科技'},
+  '00956':{'name':'統一台灣ESG高息','cat':'ESG'},'00963':{'name':'新光台灣優息成長','cat':'高股息'},
+  '00964':{'name':'永豐AI台灣大師','cat':'科技'},'00967':{'name':'中信AI台灣大師','cat':'科技'},
+  '00968':{'name':'野村台灣優質高息','cat':'高股息'},'00969':{'name':'第一金高息優質成長','cat':'高股息'},
+  '00970':{'name':'兆豐台灣半導體AI化','cat':'科技'},'00982A':{'name':'主動群益台灣強棒','cat':'主動式'},
+};
+
+// ── 股票代號查詢（ETF 靜態庫 + Yahoo 動態查詢 + 本地快取）─────
+const STOCK_CACHE_KEY = 'stock_cache_v1';
+let stockCache = {};
+try { stockCache = JSON.parse(localStorage.getItem(STOCK_CACHE_KEY) || '{}'); } catch(e) {}
+function saveStockCache() { try { localStorage.setItem(STOCK_CACHE_KEY, JSON.stringify(stockCache)); } catch(e) {} }
+
+// 合併 ETF_DB + 快取查詢
+function etfLookup(code) {
+  if (ETF_DB[code]) return ETF_DB[code];
+  if (stockCache[code]) return stockCache[code];
+  return null;
+}
+
+// 搜尋：ETF_DB + 快取，最多 8 筆
+function etfSearch(q) {
+  if (!q) return [];
+  const lq = q.toLowerCase();
+  const fromDB = Object.entries(ETF_DB)
+    .filter(([c, v]) => c.toLowerCase().startsWith(lq) || v.name.includes(q))
+    .map(([code, v]) => ({ code, ...v }));
+  const fromCache = Object.entries(stockCache)
+    .filter(([c, v]) => c.toLowerCase().startsWith(lq) || v.name.includes(q))
+    .map(([code, v]) => ({ code, ...v }));
+  // 合併去重，DB 優先
+  const seen = new Set(fromDB.map(x => x.code));
+  return [...fromDB, ...fromCache.filter(x => !seen.has(x.code))].slice(0, 8);
+}
+
+// 向 Yahoo Finance 查詢股票名稱（台股自動加 .TW / .TWO 後綴）
+async function lookupStockOnline(code) {
+  if (!code) return null;
+  const suffixes = ['.TW', '.TWO', ''];
+  for (const sfx of suffixes) {
+    try {
+      const symbol = encodeURIComponent(code + sfx);
+      const res = await fetch(
+        `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`,
+        { signal: AbortSignal.timeout(5000) }
+      );
+      if (!res.ok) continue;
+      const data = await res.json();
+      const meta = data?.chart?.result?.[0]?.meta;
+      if (!meta) continue;
+      const longName = meta.longName || meta.shortName || '';
+      if (!longName) continue;
+      // 去掉括號備注和多餘空白
+      const name = longName.replace(/\s*[\(（].*?[\)）]/g, '').trim();
+      const info = { name, cat: '個股' };
+      stockCache[code] = info;
+      saveStockCache();
+      return info;
+    } catch(e) { continue; }
+  }
+  return null;
+}
+
+// 自動帶入：先查靜態，查無則線上查詢
+async function autoFillCode(pfx, code) {
+  const codeUpper = code.toUpperCase();
+  const info = etfLookup(codeUpper) || etfLookup(code);
+  if (info) { fillCode(pfx, codeUpper || code, info.name); return; }
+  // 顯示查詢中提示
+  const hintEl = document.getElementById(pfx + '-hint');
+  if (hintEl) hintEl.textContent = '⏳ 查詢中...';
+  const online = await lookupStockOnline(code);
+  if (online) {
+    fillCode(pfx, code, online.name);
+  } else {
+    if (hintEl) hintEl.textContent = '⚠ 查無此代號，可手動輸入名稱';
+    const nameEl = document.getElementById(pfx + '-name');
+    if (nameEl) { nameEl.readOnly = false; nameEl.style.background=''; nameEl.style.color=''; nameEl.placeholder='請手動輸入股票名稱'; }
+  }
+}
+
+
+// ── State ───────────────────────────────────────────
+const STORAGE_KEY = 'etf_mgr_v1';
+let S = {
+  trades: [], pledges: [], dividends: [],
+  prices: { '0050': 168.2, '0056': 37.4, '006208': 95.6, '00878': 22.8 },
+  nextId: 1
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) S = JSON.parse(raw);
+  } catch(e) {}
+}
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); } catch(e) {}
+}
+
+// ── Helpers ─────────────────────────────────────────
+const PIE_COLORS = ['#1D9E75','#185FA5','#BA7517','#D4537E','#7F77DD','#D85A30','#639922','#E24B4A'];
+function fmt(n, d=0) { return isNaN(n) ? '-' : Number(n).toFixed(d).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function fmtM(n) { return 'NT$' + fmt(n); }
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+function getHoldings() {
+  const map = {};
+  S.trades.forEach(t => {
+    if (!map[t.code]) map[t.code] = { code: t.code, name: t.name, shares: 0, cost: 0 };
+    if (t.type === 'sell') { map[t.code].shares -= t.shares; map[t.code].cost -= t.shares * t.price; }
+    else { map[t.code].shares += t.shares; map[t.code].cost += t.shares * t.price + (t.fee || 0); }
+  });
+  return Object.values(map).filter(h => h.shares > 0).map(h => ({
+    ...h,
+    avgPrice: h.cost / h.shares,
+    price: S.prices[h.code] || 0,
+    value: (S.prices[h.code] || 0) * h.shares,
+    pnl: ((S.prices[h.code] || 0) - h.cost / h.shares) * h.shares,
+    ret: ((S.prices[h.code] || 0) / (h.cost / h.shares) - 1) * 100
+  }));
+}
+
+function calcAvg(code, upToId) {
+  let s = 0, c = 0;
+  S.trades.filter(t => t.code === code && t.id <= upToId).forEach(t => {
+    if (t.type === 'sell') { s -= t.shares; c -= t.shares * t.price; }
+    else { s += t.shares; c += t.shares * t.price; }
+  });
+  return s > 0 ? c / s : 0;
+}
+
+function badgeType(type) {
+  const map = { buy: ['badge-teal','買入'], dca: ['badge-blue','定期定額'], sell: ['badge-red','賣出'] };
+  const [cls, label] = map[type] || ['badge-amber', type];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+// ── Navigation ───────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+  const page = document.getElementById('page-' + id);
+  if (!page) return;
+  page.classList.add('active');
+  // Sidebar
+  const pages = ['overview','add-trade','pledge','dividend','analysis','settings'];
+  document.querySelectorAll('.nav-item')[pages.indexOf(id)]?.classList.add('active');
+  // Bottom nav
+  document.querySelector(`.bottom-nav-item[data-page="${id}"]`)?.classList.add('active');
+  render(id);
+  // Scroll to top on mobile
+  window.scrollTo(0, 0);
+}
+
+// ── 側邊欄功能開關 ────────────────────────────────────
+function applyNavToggles() {
+  const pledgeOn = document.getElementById('toggle-pledge')?.checked ?? true;
+  const divOn    = document.getElementById('toggle-dividend')?.checked ?? true;
+  // Sidebar
+  const pledgeNav = document.getElementById('nav-pledge');
+  const divNav    = document.getElementById('nav-dividend');
+  if (pledgeNav) pledgeNav.style.display = pledgeOn ? '' : 'none';
+  if (divNav)    divNav.style.display    = divOn    ? '' : 'none';
+  // Bottom nav
+  const bnPledge = document.getElementById('bn-pledge');
+  const bnDiv    = document.getElementById('bn-dividend');
+  if (bnPledge) bnPledge.style.display = pledgeOn ? '' : 'none';
+  if (bnDiv)    bnDiv.style.display    = divOn    ? '' : 'none';
+  // If currently on a hidden page, redirect to overview
+  const active = document.querySelector('.page.active')?.id;
+  if (active === 'page-pledge' && !pledgeOn) showPage('overview');
+  if (active === 'page-dividend' && !divOn)  showPage('overview');
+  // Persist toggles
+  try {
+    localStorage.setItem('nav_toggles', JSON.stringify({ pledge: pledgeOn, dividend: divOn }));
+  } catch(e) {}
+}
+function loadNavToggles() {
+  try {
+    const t = JSON.parse(localStorage.getItem('nav_toggles') || '{}');
+    const pledgeEl = document.getElementById('toggle-pledge');
+    const divEl    = document.getElementById('toggle-dividend');
+    if (pledgeEl && t.pledge === false) pledgeEl.checked = false;
+    if (divEl    && t.dividend === false) divEl.checked = false;
+    applyNavToggles();
+  } catch(e) {}
+}
+
+function render(id) {
+  if (id === 'overview') renderOverview();
+  if (id === 'add-trade') { renderTrades(); }
+  if (id === 'pledge') renderPledge();
+  if (id === 'dividend') renderDividend();
+  if (id === 'analysis') renderAnalysis();
+  if (id === 'settings') renderSettings();
+}
+
+// ── Autocomplete ─────────────────────────────────────
+const _ac = {};
+// debounce timer for online lookup
+let _onlineLookupTimer = {};
+
+function onCodeInput(val, pfx) {
+  // Reset name field to readonly whenever user types
+  const nameEl = document.getElementById(pfx + '-name');
+  if (nameEl) { nameEl.readOnly = true; nameEl.style.background=''; nameEl.style.color=''; nameEl.placeholder='輸入代號後自動帶入'; }
+
+  const results = etfSearch(val);
+  const dd = document.getElementById(pfx + '-ac');
+  if (results.length && val) {
+    _ac[pfx] = { results, sel: -1 };
+    dd.innerHTML = results.map((r, i) =>
+      `<div class="ac-item" id="${pfx}-aci-${i}" onmousedown="pickETF('${pfx}','${r.code}')">
+        <span class="ac-code">${r.code}</span>
+        <span class="ac-name">${r.name}</span>
+        <span class="ac-cat">${r.cat}</span>
+      </div>`).join('');
+    dd.style.display = 'block';
+  } else {
+    dd.style.display = 'none';
+  }
+
+  const exact = etfLookup(val.toUpperCase()) || etfLookup(val);
+  if (exact) {
+    fillCode(pfx, val.toUpperCase() || val, exact.name);
+    clearTimeout(_onlineLookupTimer[pfx]);
+  } else {
+    clearCode(pfx);
+    // Trigger online lookup after user stops typing for 800ms
+    clearTimeout(_onlineLookupTimer[pfx]);
+    if (val && val.length >= 3) {
+      _onlineLookupTimer[pfx] = setTimeout(() => autoFillCode(pfx, val), 800);
+    }
+  }
+}
+function onCodeKey(e, pfx) {
+  const st = _ac[pfx]; const dd = document.getElementById(pfx + '-ac');
+  if (!st || dd.style.display === 'none') return;
+  if (e.key === 'ArrowDown') { e.preventDefault(); moveSel(pfx, 1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); moveSel(pfx, -1); }
+  else if (e.key === 'Enter' && st.sel >= 0) { e.preventDefault(); pickETF(pfx, st.results[st.sel].code); }
+  else if (e.key === 'Escape') dd.style.display = 'none';
+}
+function moveSel(pfx, d) {
+  const st = _ac[pfx]; if (!st) return;
+  st.sel = Math.max(-1, Math.min(st.results.length - 1, st.sel + d));
+  st.results.forEach((_, i) => document.getElementById(`${pfx}-aci-${i}`)?.classList.toggle('sel', i === st.sel));
+}
+function pickETF(pfx, code) {
+  const info = etfLookup(code); if (!info) return;
+  document.getElementById(pfx + '-code').value = code;
+  fillCode(pfx, code, info.name);
+  document.getElementById(pfx + '-ac').style.display = 'none';
+  // Ensure name field is readonly again after picking
+  const nameEl = document.getElementById(pfx + '-name');
+  if (nameEl) { nameEl.readOnly = true; nameEl.style.background=''; nameEl.style.color=''; }
+}
+function fillCode(pfx, code, name) {
+  const n = document.getElementById(pfx + '-name');
+  if (n) { n.value = name; n.readOnly = true; n.style.background=''; n.style.color=''; }
+  const h = document.getElementById(pfx + '-hint'); if (h) h.textContent = name ? '✓ ' + name : '';
+}
+function clearCode(pfx) {
+  const n = document.getElementById(pfx + '-name'); if (n) n.value = '';
+  const h = document.getElementById(pfx + '-hint'); if (h) h.textContent = '';
+}
+function hideAC(pfx) { setTimeout(() => { const d = document.getElementById(pfx + '-ac'); if (d) d.style.display = 'none'; }, 160); }
+
+// ── Modals ────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// ── 自製日期輸入：打完指定位數自動跳下一欄 ──────────
+function datePartInput(el, nextId, maxLen) {
+  const v = el.value.replace(/\D/g,'');
+  if (v.length >= maxLen) {
+    el.value = v.slice(0, maxLen); // 截斷多餘字元
+    const next = document.getElementById(nextId);
+    if (next) { next.focus(); next.select(); }
+  }
+}
+// 讀取三欄組成 yyyy-mm-dd，任一欄空白則回傳 ''
+function getDateVal(prefix) {
+  const y = (document.getElementById(prefix+'-y')?.value||'').padStart(4,'0');
+  const m = (document.getElementById(prefix+'-m')?.value||'').padStart(2,'0');
+  const d = (document.getElementById(prefix+'-d')?.value||'').padStart(2,'0');
+  if (!y||y==='0000'||!m||m==='00'||!d||d==='00') return '';
+  return `${y}-${m}-${d}`;
+}
+// 將 yyyy-mm-dd 寫入三個欄位
+function setDateVal(prefix, val) {
+  if (!val) { ['y','m','d'].forEach(p=>{ const el=document.getElementById(prefix+'-'+p); if(el) el.value=''; }); return; }
+  const [y,m,d] = val.split('-');
+  const ey=document.getElementById(prefix+'-y'), em=document.getElementById(prefix+'-m'), ed=document.getElementById(prefix+'-d');
+  if(ey) ey.value = parseInt(y,10)||'';
+  if(em) em.value = parseInt(m,10)||'';
+  if(ed) ed.value = parseInt(d,10)||'';
+}
+// 清空三欄
+function clearDateVal(prefix) { setDateVal(prefix,''); }
+
+
+// ── 除息實領自動計算 ──────────────────────────────────
+function calcDivNet(pfx) {
+  const amount = parseFloat(document.getElementById(pfx+'-amount')?.value)||0;
+  const shares = parseFloat(document.getElementById(pfx+'-exshares')?.value)||0;
+  const remit  = parseFloat(document.getElementById(pfx+'-remit')?.value)||0;
+  const display = document.getElementById(pfx+'-net-display');
+  if (!display) return;
+  if (!amount || !shares) { display.value = ''; return; }
+  const net = amount * shares - remit;
+  display.value = 'NT$' + net.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+}
+
+// 維持率 = 擔保品市值 / 動用額度 * 100
+// 若無擔保品市值，則用 可借款額度 / 動用額度 * 100 作估算
+function calcMaintain(pfx) {
+  const credit   = parseFloat(document.getElementById(pfx + '-credit')?.value) || 0;
+  const amount   = parseFloat(document.getElementById(pfx + '-amount')?.value) || 0;
+  const collateral = parseFloat(document.getElementById(pfx + '-collateral')?.value) || 0;
+  const displayEl = document.getElementById(pfx + '-maintain-display');
+  if (!displayEl) return;
+  if (amount <= 0) { displayEl.value = ''; return; }
+  const base = collateral > 0 ? collateral : credit;
+  if (base <= 0) { displayEl.value = ''; return; }
+  const maintain = (base / amount * 100).toFixed(1);
+  displayEl.value = maintain + '%';
+}
+
+
+let pieChart = null;
+function renderOverview() {
+  const h = getHoldings();
+  const tCost = h.reduce((a, v) => a + v.cost, 0);
+  const tVal  = h.reduce((a, v) => a + v.value, 0);
+  const tPnl  = tVal - tCost;
+  const tRet  = tCost > 0 ? (tPnl / tCost) * 100 : 0;
+  document.getElementById('overview-metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">總市值</div><div class="metric-val">${fmtM(tVal)}</div></div>
+    <div class="metric"><div class="metric-label">總投入成本</div><div class="metric-val">${fmtM(tCost)}</div></div>
+    <div class="metric"><div class="metric-label">未實現損益</div><div class="metric-val ${tPnl>=0?'pos':'neg'}">${tPnl>=0?'+':''}${fmtM(tPnl)}</div></div>
+    <div class="metric"><div class="metric-label">整體報酬率</div><div class="metric-val ${tRet>=0?'pos':'neg'}">${tRet>=0?'+':''}${fmt(tRet,2)}%</div><div class="metric-sub">${h.length} 檔 ETF</div></div>`;
+
+  // 現價快速更新輸入列
+  const priceEl = document.getElementById('overview-price-inputs');
+  if (priceEl) {
+    priceEl.innerHTML = h.length
+      ? h.map(v => `
+        <div style="display:flex;align-items:center;gap:6px;background:var(--bg2);padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border)">
+          <span style="font-size:12px;font-weight:600;min-width:52px">${v.code}</span>
+          <input type="number" id="op-${v.code}" value="${(S.prices[v.code]||0).toFixed(2)}" step="0.01"
+            style="width:90px;font-size:13px;padding:4px 8px" />
+        </div>`).join('')
+      : '<span style="font-size:13px;color:var(--text3)">尚無持股</span>';
+  }
+
+  if (!h.length) {
+    document.getElementById('holdings-table').innerHTML = '<tr><td colspan="8"><div class="empty"><div class="empty-icon">📂</div><p>尚無持股，請先新增交易紀錄</p></div></td></tr>';
+    return;
+  }
+  document.getElementById('holdings-table').innerHTML = h.map(v => `<tr>
+    <td><strong>${v.code}</strong></td><td>${v.name}</td><td>${fmt(v.shares)} 股</td>
+    <td>${fmt(v.avgPrice,2)}</td><td>${fmtM(v.cost)}</td><td>${fmt(v.price,2)}</td><td>${fmtM(v.value)}</td>
+    <td class="${v.pnl>=0?'pos':'neg'}">${v.pnl>=0?'+':''}${fmtM(v.pnl)}</td>
+    <td class="${v.ret>=0?'pos':'neg'}">${v.ret>=0?'+':''}${fmt(v.ret,2)}%</td></tr>`).join('');
+  drawPie(h); drawCostBars(h);
+}
+function saveOverviewPrices() {
+  getHoldings().forEach(v => {
+    const el = document.getElementById('op-' + v.code);
+    if (el) { const val = parseFloat(el.value); if (!isNaN(val) && val > 0) S.prices[v.code] = val; }
+  });
+  saveState(); renderOverview(); toast('✓ 現價已更新');
+}
+function drawPie(h) {
+  const totalShares = h.reduce((a, v) => a + v.shares, 0);
+  const ctx = document.getElementById('pieChart').getContext('2d');
+  if (pieChart) pieChart.destroy();
+  pieChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: h.map(v => v.code), datasets: [{ data: h.map(v => v.shares), backgroundColor: PIE_COLORS.slice(0, h.length), borderWidth: 0 }] },
+    options: { responsive: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.label}: ${fmt(c.parsed)} 股 (${(c.parsed/totalShares*100).toFixed(1)}%)` } } }, cutout: '62%' }
+  });
+  document.getElementById('pie-legend').innerHTML = h.map((v, i) =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${PIE_COLORS[i%PIE_COLORS.length]}"></div><span style="font-weight:500">${v.code}</span><span style="color:var(--text3);font-size:11px">(${fmt(v.shares)}股)</span><span style="color:var(--text2)">${(v.shares/totalShares*100).toFixed(1)}%</span></div>`).join('');
+}
+function drawCostBars(h) {
+  const max = Math.max(...h.map(v => v.cost));
+  document.getElementById('cost-bars').innerHTML = h.map((v, i) =>
+    `<div class="chart-bar"><div class="bar-label">${v.code}</div><div class="bar-track"><div class="bar-fill" style="width:${(v.cost/max*100).toFixed(1)}%;background:${PIE_COLORS[i%PIE_COLORS.length]}"><span class="bar-val">${fmtM(v.cost)}</span></div></div></div>`).join('');
+}
+
+// ── Add Trade ────────────────────────────────────────
+let _tradeTab = 'buy';
+function switchTab(tab) {
+  _tradeTab = tab;
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', ['buy','dca','sell'][i] === tab));
+  document.getElementById('dca-extra').style.display = tab === 'dca' ? 'grid' : 'none';
+  document.getElementById('trade-form-title').textContent = tab === 'buy' ? '新增買入紀錄' : tab === 'dca' ? '新增定期定額紀錄' : '新增賣出紀錄';
+  // 依 tab 設定預設值
+  const sharesEl = document.getElementById('tf-shares');
+  const feeEl = document.getElementById('tf-fee');
+  if (tab === 'buy') {
+    sharesEl.placeholder = '1000（預設）';
+    feeEl.placeholder = '20';
+    if (!sharesEl.dataset.userEdited) sharesEl.value = '';  // 清空讓 placeholder 顯示
+    if (!feeEl.dataset.userEdited) feeEl.value = '';
+  } else if (tab === 'dca') {
+    sharesEl.placeholder = '請輸入股數';
+    feeEl.placeholder = '1（預設）';
+    sharesEl.value = '';
+    if (!feeEl.dataset.userEdited) feeEl.value = '';
+  } else {
+    sharesEl.placeholder = '股數';
+    feeEl.placeholder = '20';
+    sharesEl.value = '';
+    feeEl.value = '';
+  }
+  sharesEl.dataset.userEdited = '';
+  feeEl.dataset.userEdited = '';
+}
+function clearTradeForm() {
+  ['tf-code','tf-name','tf-shares','tf-price','tf-fee','tf-note'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.value = ''; el.dataset.userEdited = ''; }
+  });
+  const today = new Date();
+  setDateVal('tf-date', today.toISOString().slice(0,10));
+  clearDateVal('tf-nextdate');
+  document.getElementById('tf-hint').textContent = '';
+}
+function addTrade() {
+  const code = document.getElementById('tf-code').value.trim().toUpperCase();
+  const name = document.getElementById('tf-name').value.trim();
+  const date = getDateVal('tf-date');
+  const nextdate = getDateVal('tf-nextdate');
+  const sharesRaw = document.getElementById('tf-shares').value;
+  // 一般買入：若未填則預設 1000
+  const shares = _tradeTab === 'buy' && !sharesRaw ? 1000 : parseFloat(sharesRaw);
+  const price = parseFloat(document.getElementById('tf-price').value);
+  // 定期定額：若未填手續費預設 1；其他預設 0
+  const feeRaw = document.getElementById('tf-fee').value;
+  const fee = feeRaw !== '' ? parseFloat(feeRaw) : (_tradeTab === 'dca' ? 1 : 0);
+  const note = document.getElementById('tf-note').value.trim();
+  if (!code || !name || !date || !shares || !price) { toast('⚠️ 請填寫必填欄位'); return; }
+  const t = { id: S.nextId++, date, code, name, type: _tradeTab, shares, price, fee, note };
+  if (_tradeTab === 'dca') { t.freq = document.getElementById('tf-freq').value; t.nextdate = nextdate; }
+  S.trades.push(t);
+  if (!S.prices[code]) S.prices[code] = price;
+  saveState(); clearTradeForm(); renderTrades();
+  toast('✓ 交易紀錄已新增');
+}
+function renderRecent() {
+  const rows = [...S.trades].sort((a,b) => b.id - a.id).slice(0, 5);
+  document.getElementById('recent-table').innerHTML = rows.length ? rows.map(t =>
+    `<tr><td>${t.date}</td><td><strong>${t.code}</strong></td><td>${t.name}</td><td>${badgeType(t.type)}</td><td>${fmt(t.shares)}</td><td>${fmt(t.price,2)}</td><td>${fmtM(t.shares*t.price)}</td></tr>`).join('')
+    : '<tr><td colspan="7"><div class="empty"><p>尚無交易紀錄</p></div></td></tr>';
+}
+
+// ── Trades ────────────────────────────────────────────
+function renderTrades() {
+  const fc = document.getElementById('f-code').value;
+  const ft = document.getElementById('f-type').value;
+  const codes = [...new Set(S.trades.map(t => t.code))];
+  const sel = document.getElementById('f-code'); const cur = sel.value;
+  sel.innerHTML = '<option value="">全部 ETF</option>' + codes.map(c => `<option value="${c}" ${c===cur?'selected':''}>${c}</option>`).join('');
+  const rows = [...S.trades].filter(t => (!fc||t.code===fc) && (!ft||t.type===ft)).sort((a,b) => new Date(a.date)-new Date(b.date));
+  document.getElementById('trades-table').innerHTML = rows.length ? rows.map(t => {
+    const totalCost = t.shares * t.price + (t.fee || 0);
+    return `<tr><td>${t.date}</td><td><strong>${t.code}</strong></td><td>${t.name}</td><td>${badgeType(t.type)}</td>
+      <td>${fmt(t.shares)}</td><td>${fmt(t.price,2)}</td><td>${fmt(t.fee||0)}</td><td>${fmtM(totalCost)}</td>
+      <td style="color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis">${t.note||''}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-edit" onclick="openEditTrade(${t.id})">編輯</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteTrade(${t.id})">刪除</button>
+      </td></tr>`;
+  }).join('') : '<tr><td colspan="10"><div class="empty"><p>沒有符合的交易紀錄</p></div></td></tr>';
+}
+function deleteTrade(id) {
+  if (!confirm('確定刪除此交易紀錄？')) return;
+  S.trades = S.trades.filter(t => t.id !== id);
+  saveState(); renderTrades(); toast('已刪除');
+}
+function openEditTrade(id) {
+  const t = S.trades.find(t => t.id === id); if (!t) return;
+  document.getElementById('et-id').value = id;
+  setDateVal('et-date', t.date);
+  document.getElementById('et-type').value = t.type;
+  document.getElementById('et-shares').value = t.shares;
+  document.getElementById('et-price').value = t.price;
+  document.getElementById('et-fee').value = t.fee || 0;
+  document.getElementById('et-note').value = t.note || '';
+  openModal('edit-trade-modal');
+}
+function saveEditTrade() {
+  const id = parseInt(document.getElementById('et-id').value);
+  const t = S.trades.find(t => t.id === id); if (!t) return;
+  t.date = getDateVal('et-date') || t.date;
+  t.type = document.getElementById('et-type').value;
+  t.shares = parseFloat(document.getElementById('et-shares').value) || t.shares;
+  t.price = parseFloat(document.getElementById('et-price').value) || t.price;
+  t.fee = parseFloat(document.getElementById('et-fee').value) || 0;
+  t.note = document.getElementById('et-note').value;
+  saveState(); closeModal('edit-trade-modal'); renderTrades(); toast('✓ 已更新');
+}
+
+// ── Pledge ────────────────────────────────────────────
+function renderPledge() {
+  const active = S.pledges.filter(p => p.status === 'active');
+  document.getElementById('pledge-metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">質押中筆數</div><div class="metric-val">${active.length}</div></div>
+    <div class="metric"><div class="metric-label">擔保品總張數</div><div class="metric-val">${active.reduce((a,p)=>a+p.lots,0)} 張</div></div>
+    <div class="metric"><div class="metric-label">動用額度總計</div><div class="metric-val">${fmtM(active.reduce((a,p)=>a+p.amount,0))}</div></div>`;
+  document.getElementById('pledge-table').innerHTML = S.pledges.length ?
+    S.pledges.map(p => {
+      const maintain = p.amount > 0
+        ? (((p.collateral||0) > 0 ? p.collateral : (p.credit||0)) / p.amount * 100).toFixed(1) + '%'
+        : '-';
+      return `<tr>
+        <td><strong>${p.code}</strong></td><td>${p.name||p.code}</td><td>${p.lots} 張</td>
+        <td>${p.date}</td><td>${p.expiry}</td><td>${p.rate}%</td>
+        <td>${p.credit>0?fmtM(p.credit):'-'}</td>
+        <td>${fmtM(p.amount)}</td>
+        <td>${maintain}</td>
+        <td><span class="badge ${p.status==='active'?'badge-teal':'badge-amber'}">${p.status==='active'?'質押中':'已解除'}</span></td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-sm btn-edit" onclick="openEditPledge(${p.id})">編輯</button>
+          <button class="btn btn-sm btn-danger" onclick="deletePledge(${p.id})">刪除</button>
+        </td></tr>`;
+    }).join('')
+    : '<tr><td colspan="11"><div class="empty"><div class="empty-icon">🏦</div><p>尚無質押紀錄</p></div></td></tr>';
+}
+function savePledge() {
+  const code = document.getElementById('pm-code').value.trim().toUpperCase();
+  const info = etfLookup(code);
+  const credit = parseFloat(document.getElementById('pm-credit').value) || 0;
+  const amount = parseFloat(document.getElementById('pm-amount').value) || 0;
+  const collateral = parseFloat(document.getElementById('pm-collateral').value) || 0;
+  const p = {
+    id: S.nextId++, code, name: info ? info.name : (document.getElementById('pm-name')?.value || code),
+    lots: parseFloat(document.getElementById('pm-lots').value) || 0,
+    date: getDateVal('pm-date'), expiry: getDateVal('pm-expiry'),
+    rate: parseFloat(document.getElementById('pm-rate').value) || 0,
+    credit, amount, collateral, status: 'active'
+  };
+  S.pledges.push(p); saveState(); closeModal('pledge-modal'); renderPledge(); toast('✓ 質押紀錄已新增');
+  ['pm-code','pm-lots','pm-rate','pm-credit','pm-amount','pm-collateral','pm-maintain-display'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  clearDateVal('pm-date'); clearDateVal('pm-expiry');
+  document.getElementById('pm-hint').textContent = '';
+}
+function deletePledge(id) {
+  if (!confirm('確定刪除此質押紀錄？')) return;
+  S.pledges = S.pledges.filter(p => p.id !== id);
+  saveState(); renderPledge(); toast('已刪除');
+}
+function openEditPledge(id) {
+  const p = S.pledges.find(p => p.id === id); if (!p) return;
+  document.getElementById('ep-id').value = id;
+  document.getElementById('ep-lots').value = p.lots;
+  document.getElementById('ep-rate').value = p.rate;
+  document.getElementById('ep-credit').value = p.credit || '';
+  document.getElementById('ep-amount').value = p.amount;
+  document.getElementById('ep-collateral').value = p.collateral || '';
+  setDateVal('ep-expiry', p.expiry);
+  document.getElementById('ep-status').value = p.status;
+  calcMaintain('ep');
+  openModal('edit-pledge-modal');
+}
+function saveEditPledge() {
+  const id = parseInt(document.getElementById('ep-id').value);
+  const p = S.pledges.find(p => p.id === id); if (!p) return;
+  p.lots = parseFloat(document.getElementById('ep-lots').value) || p.lots;
+  p.rate = parseFloat(document.getElementById('ep-rate').value) || p.rate;
+  p.credit = parseFloat(document.getElementById('ep-credit').value) || 0;
+  p.amount = parseFloat(document.getElementById('ep-amount').value) || p.amount;
+  p.collateral = parseFloat(document.getElementById('ep-collateral').value) || 0;
+  p.expiry = getDateVal('ep-expiry') || p.expiry;
+  p.status = document.getElementById('ep-status').value;
+  saveState(); closeModal('edit-pledge-modal'); renderPledge(); toast('✓ 已更新');
+}
+
+// ── Dividend ──────────────────────────────────────────
+function renderDividend() {
+  const today = new Date();
+  const upcoming = [...S.dividends].filter(d => new Date(d.exdate) >= today).sort((a,b) => new Date(a.exdate)-new Date(b.exdate)).slice(0,3);
+  document.getElementById('div-alerts').innerHTML = upcoming.map(d => {
+    const days = Math.ceil((new Date(d.exdate) - today) / 86400000);
+    const cls = days <= 14 ? 'badge-red' : days <= 30 ? 'badge-amber' : 'badge-teal';
+    const gross = (d.exshares || 0) * (d.amount || 0);
+    const remit = d.remit ?? 10;
+    const net = gross > 0 ? gross - remit : 0;
+    return `<div class="alert-card">
+      <div class="alert-body">
+        <div class="alert-title">${d.code} ${d.name} — 除息日 ${d.exdate}</div>
+        <div class="alert-sub">配息 ${d.amount} 元/股 · ${d.exshares||'-'} 股 · 毛股息 ${gross>0?fmtM(gross):'-'} · 匯費 ${fmtM(remit)} · <strong>實領 ${net>0?fmtM(net):'-'}</strong>${d.paydate?' · 發放日 '+d.paydate:''}</div>
+      </div>
+      <span class="badge ${cls}" style="white-space:nowrap">${days} 天後</span>
+    </div>`;
+  }).join('') || '<div class="empty"><p>近期無除權息事件</p></div>';
+
+  document.getElementById('div-table').innerHTML = S.dividends.length ?
+    S.dividends.map(d => {
+      const gross = (d.exshares || 0) * (d.amount || 0);
+      const remit = d.remit ?? 10;
+      const net = gross > 0 ? gross - remit : 0;
+      return `<tr><td><strong>${d.code}</strong></td><td>${d.name}</td><td>${d.exdate}</td>
+        <td>${d.amount} 元</td><td>${d.exshares||'-'} 股</td>
+        <td>${gross>0?fmtM(gross):'-'}</td>
+        <td>${fmtM(remit)}</td>
+        <td style="font-weight:500;color:#0F6E56">${net>0?fmtM(net):'-'}</td>
+        <td>${d.paydate||'-'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-sm btn-edit" onclick="openEditDiv(${d.id})">編輯</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteDiv(${d.id})">刪除</button>
+        </td></tr>`;
+    }).join('')
+    : '<tr><td colspan="10"><div class="empty"><div class="empty-icon">💰</div><p>尚無除權息資料</p></div></td></tr>';
+}
+function saveDiv() {
+  const code = document.getElementById('dv-code').value.trim().toUpperCase();
+  const info = etfLookup(code);
+  const d = {
+    id: S.nextId++, code, name: info ? info.name : (document.getElementById('dv-name')?.value || code),
+    exdate: getDateVal('dv-exdate'),
+    amount: parseFloat(document.getElementById('dv-amount').value) || 0,
+    exshares: parseFloat(document.getElementById('dv-exshares').value) || 0,
+    remit: parseFloat(document.getElementById('dv-remit').value) ?? 10,
+    paydate: getDateVal('dv-paydate')
+  };
+  S.dividends.push(d); saveState(); closeModal('div-modal'); renderDividend(); toast('✓ 除權息紀錄已新增');
+  ['dv-code','dv-amount','dv-exshares'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  const remitEl = document.getElementById('dv-remit'); if(remitEl) remitEl.value = '10';
+  const netEl = document.getElementById('dv-net-display'); if(netEl) netEl.value = '';
+  clearDateVal('dv-exdate'); clearDateVal('dv-paydate');
+  document.getElementById('dv-hint').textContent = '';
+}
+function deleteDiv(id) {
+  if (!confirm('確定刪除此除權息紀錄？')) return;
+  S.dividends = S.dividends.filter(d => d.id !== id);
+  saveState(); renderDividend(); toast('已刪除');
+}
+function openEditDiv(id) {
+  const d = S.dividends.find(d => d.id === id); if (!d) return;
+  document.getElementById('ed-id').value = id;
+  setDateVal('ed-date', d.exdate);
+  document.getElementById('ed-amount').value = d.amount;
+  document.getElementById('ed-exshares').value = d.exshares || '';
+  document.getElementById('ed-remit').value = d.remit ?? 10;
+  setDateVal('ed-paydate', d.paydate || '');
+  openModal('edit-div-modal');
+}
+function saveEditDiv() {
+  const id = parseInt(document.getElementById('ed-id').value);
+  const d = S.dividends.find(d => d.id === id); if (!d) return;
+  d.exdate = getDateVal('ed-date') || d.exdate;
+  d.amount = parseFloat(document.getElementById('ed-amount').value) || d.amount;
+  d.exshares = parseFloat(document.getElementById('ed-exshares').value) || 0;
+  d.remit = parseFloat(document.getElementById('ed-remit').value) ?? 10;
+  d.paydate = getDateVal('ed-paydate') || '';
+  saveState(); closeModal('edit-div-modal'); renderDividend(); toast('✓ 已更新');
+}
+
+// ── Analysis ──────────────────────────────────────────
+let lineChart = null;
+function renderAnalysis() {
+  const h = getHoldings();
+  const tCost = h.reduce((a,v)=>a+v.cost,0);
+  const tVal  = h.reduce((a,v)=>a+v.value,0);
+  const tPnl  = tVal - tCost;
+  const estDiv = S.dividends.reduce((a,d) => a + (d.exshares||0) * (d.amount||0), 0);
+  const yield_ = tVal > 0 ? (estDiv/tVal*100) : 0;
+  document.getElementById('perf-metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">整體報酬率</div><div class="metric-val ${tPnl>=0?'pos':'neg'}">${tCost>0?((tPnl/tCost)*100).toFixed(2):0}%</div></div>
+    <div class="metric"><div class="metric-label">預估年股息</div><div class="metric-val">${fmtM(estDiv)}</div><div class="metric-sub">月均 ${fmtM(estDiv/12)}</div></div>
+    <div class="metric"><div class="metric-label">殖利率</div><div class="metric-val">${fmt(yield_,2)}%</div></div>
+    <div class="metric"><div class="metric-label">交易筆數</div><div class="metric-val">${S.trades.length}</div></div>`;
+
+  // ── 已領股息總金額 ────────────────────────────────
+  const today = new Date();
+  const pastDivs = S.dividends.filter(d => d.paydate && new Date(d.paydate) <= today);
+  const totalReceived = pastDivs.reduce((a,d) => {
+    const gross = (d.exshares||0)*(d.amount||0);
+    const remit = d.remit ?? 10;
+    return a + (gross > 0 ? gross - remit : 0);
+  }, 0);
+  // 最早發放日
+  const allWithPaydate = S.dividends.filter(d => d.paydate).sort((a,b) => new Date(a.paydate)-new Date(b.paydate));
+  const earliestPaydate = allWithPaydate.length > 0 ? allWithPaydate[0].paydate : null;
+  const fmtDate = (str) => {
+    if (!str) return '';
+    const d = new Date(str);
+    return `${d.getFullYear()} 年 ${d.getMonth()+1} 月 ${d.getDate()} 日`;
+  };
+  const card = document.getElementById('received-div-card');
+  if (card) {
+    if (allWithPaydate.length === 0) {
+      card.style.display = 'none';
+    } else {
+      card.style.display = '';
+      card.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <div class="card-title" style="margin-bottom:4px">已領股息總金額</div>
+            <div style="font-size:11px;color:var(--text3)">自 ${fmtDate(earliestPaydate)} 起累計</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:28px;font-weight:700;color:#0F6E56;letter-spacing:-0.5px">${fmtM(totalReceived)}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px">共 ${pastDivs.length} 筆已發放</div>
+          </div>
+        </div>
+        ${pastDivs.length > 0 ? `
+        <div style="margin-top:14px;border-top:0.5px solid var(--border);padding-top:12px;display:flex;flex-wrap:wrap;gap:8px">
+          ${pastDivs.map(d => {
+            const gross=(d.exshares||0)*(d.amount||0); const remit=d.remit??10; const net=gross>0?gross-remit:0;
+            return `<div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:6px 12px;font-size:12px">
+              <span style="font-weight:600">${d.code}</span>
+              <span style="color:var(--text2);margin:0 6px">${d.paydate}</span>
+              <span style="color:#0F6E56;font-weight:500">${fmtM(net)}</span>
+            </div>`;}).join('')}
+        </div>` : ''}`;
+    }
+  }
+
+  const maxA = Math.max(...h.map(v=>Math.abs(v.ret)), 1);
+  document.getElementById('ret-bars').innerHTML = h.map(v =>
+    `<div class="chart-bar"><div class="bar-label">${v.code}</div><div class="bar-track"><div class="bar-fill" style="width:${(Math.abs(v.ret)/maxA*100).toFixed(1)}%;background:${v.ret>=0?'#1D9E75':'#A32D2D'}"><span class="bar-val">${v.ret>=0?'+':''}${fmt(v.ret,2)}%</span></div></div></div>`).join('');
+  const totDiv = S.dividends.reduce((a,d) => a + (d.exshares||0)*(d.amount||0), 0);
+  document.getElementById('div-stats').innerHTML = S.dividends.map((d, i) => {
+    const est = (d.exshares||0) * (d.amount||0);
+    return `<div class="chart-bar"><div class="bar-label" style="font-size:11px">${d.code}</div><div class="bar-track"><div class="bar-fill" style="width:${est>0&&totDiv>0?(est/totDiv*100).toFixed(1):0}%;background:${PIE_COLORS[i%PIE_COLORS.length]}"><span class="bar-val">${fmtM(est)}</span></div></div></div>`;
+  }).join('') + `<div style="display:flex;gap:12px;font-size:13px;border-top:0.5px solid var(--border);padding-top:10px;margin-top:8px"><span style="color:var(--text2)">年化殖利率</span><span style="font-weight:600;color:#0F6E56">${fmt(yield_,2)}%</span></div>`;
+  drawLine();
+  drawDivChart();
+}
+let divBarChart = null;
+let _divChartMode = 'year';
+function setDivChartMode(mode) {
+  _divChartMode = mode;
+  document.getElementById('div-chart-year-btn').classList.toggle('active', mode==='year');
+  document.getElementById('div-chart-month-btn').classList.toggle('active', mode==='month');
+  drawDivChart();
+}
+function drawDivChart() {
+  const buckets = {};
+  S.dividends.forEach(d => {
+    if (!d.paydate) return;
+    const gross = (d.exshares||0)*(d.amount||0);
+    const remit = d.remit ?? 10;
+    const net = gross > 0 ? gross - remit : 0;
+    if (net <= 0) return;
+    const key = _divChartMode === 'year' ? d.paydate.slice(0,4) : d.paydate.slice(0,7);
+    buckets[key] = (buckets[key]||0) + net;
+  });
+  const labels = Object.keys(buckets).sort();
+  const data = labels.map(k => Math.round(buckets[k]));
+  const ctx = document.getElementById('div-bar-chart')?.getContext('2d');
+  if (!ctx) return;
+  if (divBarChart) divBarChart.destroy();
+  divBarChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: '實領股息', data, backgroundColor: 'rgba(15,110,86,0.65)', borderColor: '#0F6E56', borderWidth: 1.5, borderRadius: 4 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => 'NT$' + c.parsed.y.toLocaleString() } } },
+      scales: { y: { ticks: { callback: v => 'NT$' + Math.round(v/1000) + 'K' }, beginAtZero: true } }
+    }
+  });
+}
+function drawLine() {
+  const months = {};
+  S.trades.forEach(t => { const m = t.date.slice(0,7); months[m] = (months[m]||0) + t.shares * t.price; });
+  const labels = Object.keys(months).sort();
+  const ctx = document.getElementById('line-chart').getContext('2d');
+  if (lineChart) lineChart.destroy();
+  lineChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: '買入金額', data: labels.map(m=>Math.round(months[m])), backgroundColor: 'rgba(29,158,117,0.55)', borderColor: '#1D9E75', borderWidth: 1.5 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => '$' + Math.round(v/1000) + 'K' } } } }
+  });
+}
+
+// ── Settings ──────────────────────────────────────────
+function renderSettings() {
+  // Sync toggle states from saved prefs
+  try {
+    const t = JSON.parse(localStorage.getItem('nav_toggles') || '{}');
+    if (t.pledge === false && document.getElementById('toggle-pledge')) document.getElementById('toggle-pledge').checked = false;
+    if (t.dividend === false && document.getElementById('toggle-dividend')) document.getElementById('toggle-dividend').checked = true;
+  } catch(e) {}
+  // Show stock cache stats
+  const cacheCount = Object.keys(stockCache).length;
+  const cacheInfo = document.getElementById('stock-cache-info');
+  if (cacheInfo) cacheInfo.textContent = `目前快取：${cacheCount} 筆股票資料`;
+}
+
+// ── Import / Export ───────────────────────────────────
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `etf_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); toast('✓ 備份已下載');
+}
+function importJSON(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.trades) throw new Error('格式錯誤');
+      if (!confirm(`確定要匯入備份？目前資料將被覆蓋。\n（共 ${data.trades.length} 筆交易）`)) return;
+      S = data; saveState();
+      render(document.querySelector('.page.active')?.id.replace('page-','') || 'overview');
+      toast('✓ 資料已還原');
+    } catch(err) { alert('匯入失敗：' + err.message); }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+function exportCSV() {
+  const headers = ['日期','代號','名稱','類型','股數','成交價','總金額','手續費','備註'];
+  const rows = [...S.trades].sort((a,b) => new Date(a.date)-new Date(b.date)).map(t =>
+    [t.date, t.code, t.name, t.type==='buy'?'買入':t.type==='dca'?'定期定額':'賣出', t.shares, t.price, t.shares*t.price, t.fee||0, t.note||''].map(v => `"${v}"`).join(','));
+  const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `etf_trades_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  toast('✓ CSV 已下載');
+}
+function clearAllData() {
+  if (!confirm('確定要清除所有資料？此操作無法復原！')) return;
+  S = { trades: [], pledges: [], dividends: [], prices: {}, nextId: 1 };
+  saveState(); showPage('overview'); toast('資料已清除');
+}
+function clearStockCache() {
+  if (!confirm('確定要清除股票查詢快取？')) return;
+  stockCache = {};
+  saveStockCache();
+  renderSettings();
+  toast('✓ 快取已清除');
+}
+
+// ── PWA Service Worker 註冊 ───────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+// ── Init ──────────────────────────────────────────────
+loadState();
+loadNavToggles();
+setDateVal('tf-date', new Date().toISOString().slice(0,10));
+renderOverview();
+</script>
+</body>
+</html>
