@@ -438,16 +438,16 @@ code { font-family: monospace; font-size: 12px; background: var(--bg2); padding:
       </div>
 
       <!-- 交易紀錄（合併在此） -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;margin-top:4px">
-        <div style="font-size:15px;font-weight:600;color:var(--text)">交易紀錄</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <select id="f-code" onchange="renderTrades()" style="font-size:13px;padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg);color:var(--text)"><option value="">全部 ETF</option></select>
-          <select id="f-type" onchange="renderTrades()" style="font-size:13px;padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg);color:var(--text)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;margin-top:4px;gap:10px;flex-wrap:wrap">
+        <div style="font-size:15px;font-weight:600;color:var(--text);flex-shrink:0">交易紀錄</div>
+        <div style="display:flex;gap:6px;align-items:center;min-width:0">
+          <select id="f-code" onchange="renderTrades()" style="font-size:12px;padding:5px 6px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);flex:1;min-width:0"><option value="">全部 ETF</option></select>
+          <select id="f-type" onchange="renderTrades()" style="font-size:12px;padding:5px 6px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);flex:1;min-width:0">
             <option value="">全部類型</option><option value="buy">買入</option><option value="dca">定期定額</option><option value="sell">賣出</option>
           </select>
-          <select id="f-sort" onchange="renderTrades()" style="font-size:13px;padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg);color:var(--text)">
-            <option value="asc">日期 舊→新</option>
-            <option value="desc">日期 新→舊</option>
+          <select id="f-sort" onchange="renderTrades()" style="font-size:12px;padding:5px 6px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);flex:1;min-width:0">
+            <option value="desc">新→舊</option>
+            <option value="asc">舊→新</option>
           </select>
         </div>
       </div>
