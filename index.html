@@ -332,7 +332,11 @@ code { font-family: monospace; font-size: 12px; background: var(--bg2); padding:
             <div class="card-title" style="margin-bottom:2px">現價更新</div>
             <div style="font-size:11px;color:var(--text3)">手動更新各 ETF 的現價，以計算正確的損益與報酬率。</div>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="saveOverviewPrices()">✓ 儲存現價</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span id="price-fetch-status" style="font-size:12px;color:var(--text3)"></span>
+            <button class="btn btn-sm" onclick="fetchAllPrices()" id="btn-fetch-prices">🔄 自動抓取</button>
+            <button class="btn btn-primary btn-sm" onclick="saveOverviewPrices()">✓ 儲存現價</button>
+          </div>
         </div>
         <div id="overview-price-inputs" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px"></div>
       </div>
@@ -402,10 +406,14 @@ code { font-family: monospace; font-size: 12px; background: var(--bg2); padding:
       <!-- 交易紀錄（合併在此） -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;margin-top:4px">
         <div style="font-size:15px;font-weight:600;color:var(--text)">交易紀錄</div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
           <select id="f-code" onchange="renderTrades()" style="font-size:13px;padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg);color:var(--text)"><option value="">全部 ETF</option></select>
           <select id="f-type" onchange="renderTrades()" style="font-size:13px;padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg);color:var(--text)">
             <option value="">全部類型</option><option value="buy">買入</option><option value="dca">定期定額</option><option value="sell">賣出</option>
+          </select>
+          <select id="f-sort" onchange="renderTrades()" style="font-size:13px;padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg);color:var(--text)">
+            <option value="asc">日期 舊→新</option>
+            <option value="desc">日期 新→舊</option>
           </select>
         </div>
       </div>
@@ -507,30 +515,39 @@ code { font-family: monospace; font-size: 12px; background: var(--bg2); padding:
     <div class="page" id="page-analysis">
       <div class="page-header"><div class="page-title">績效分析</div><div class="page-sub">投資組合整體表現</div></div>
       <div class="metric-grid" id="perf-metrics"></div>
-      <div class="card" id="received-div-card" style="margin-bottom:14px"></div>
-      <div class="grid2">
+      <div class="grid2" style="margin-bottom:14px">
         <div class="card">
-          <div class="card-title">各 ETF 報酬率</div>
+          <div class="card-title">含息總報酬率（各 ETF）</div>
           <div id="ret-bars"></div>
         </div>
         <div class="card">
-          <div class="card-title">預估股息收益</div>
+          <div class="card-title">股息收益</div>
           <div id="div-stats"></div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-title">月度買入成本</div>
-        <div style="position:relative;height:200px"><canvas id="line-chart" role="img" aria-label="月度買入成本折線圖"></canvas></div>
-      </div>
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-          <div class="card-title" style="margin-bottom:0">股息收入統計</div>
-          <div style="display:flex;gap:4px;background:var(--bg2);padding:3px;border-radius:var(--radius)">
-            <button id="div-chart-year-btn" class="tab active" onclick="setDivChartMode('year')" style="font-size:12px;padding:4px 12px">年</button>
-            <button id="div-chart-month-btn" class="tab" onclick="setDivChartMode('month')" style="font-size:12px;padding:4px 12px">月</button>
-          </div>
+      <div class="grid2" style="margin-bottom:14px">
+        <div class="card">
+          <div class="card-title">月度買入成本</div>
+          <div style="position:relative;height:200px"><canvas id="line-chart" role="img" aria-label="月度買入成本折線圖"></canvas></div>
         </div>
-        <div style="position:relative;height:220px"><canvas id="div-bar-chart" role="img" aria-label="股息收入統計圖"></canvas></div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <div class="card-title" style="margin-bottom:0">股息收入統計</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="display:flex;gap:4px;background:var(--bg2);padding:3px;border-radius:var(--radius)">
+                <button id="div-chart-year-btn" class="tab active" onclick="setDivChartMode('year')" style="font-size:12px;padding:4px 12px">年</button>
+                <button id="div-chart-month-btn" class="tab" onclick="setDivChartMode('month')" style="font-size:12px;padding:4px 12px">月</button>
+              </div>
+              <div id="div-year-nav" style="display:none;align-items:center;gap:6px">
+                <button onclick="shiftDivYear(-1)" style="background:none;border:0.5px solid var(--border2);border-radius:var(--radius);padding:4px 10px;cursor:pointer;font-size:13px;color:var(--text)">‹</button>
+                <span id="div-year-label" style="font-size:13px;font-weight:500;min-width:48px;text-align:center"></span>
+                <button onclick="shiftDivYear(1)" style="background:none;border:0.5px solid var(--border2);border-radius:var(--radius);padding:4px 10px;cursor:pointer;font-size:13px;color:var(--text)">›</button>
+                <button onclick="resetDivYear()" style="background:none;border:0.5px solid var(--border2);border-radius:var(--radius);padding:4px 8px;cursor:pointer;font-size:11px;color:var(--text2)">全部</button>
+              </div>
+            </div>
+          </div>
+          <div style="position:relative;height:200px"><canvas id="div-bar-chart" role="img" aria-label="股息收入統計圖"></canvas></div>
+        </div>
       </div>
     </div>
 
@@ -1377,16 +1394,22 @@ function renderOverview() {
     <div class="metric"><div class="metric-label">未實現損益</div><div class="metric-val ${tPnl>=0?'pos':'neg'}">${tPnl>=0?'+':''}${fmtM(tPnl)}</div></div>
     <div class="metric"><div class="metric-label">整體報酬率</div><div class="metric-val ${tRet>=0?'pos':'neg'}">${tRet>=0?'+':''}${fmt(tRet,2)}%</div><div class="metric-sub">${h.length} 檔 ETF</div></div>`;
 
-  // 現價快速更新輸入列
+  // 現價快速更新輸入列（含狀態框線）
   const priceEl = document.getElementById('overview-price-inputs');
   if (priceEl) {
     priceEl.innerHTML = h.length
-      ? h.map(v => `
-        <div style="display:flex;align-items:center;gap:6px;background:var(--bg2);padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border)">
-          <span style="font-size:12px;font-weight:600;min-width:52px">${v.code}</span>
-          <input type="number" id="op-${v.code}" value="${(S.prices[v.code]||0).toFixed(2)}" step="0.01"
-            style="width:90px;font-size:13px;padding:4px 8px" />
-        </div>`).join('')
+      ? h.map(v => {
+          const st = _priceStatus[v.code] || 'none';
+          const borderColor = st==='ok' ? '#1D9E75' : st==='fail' ? '#A32D2D' : 'var(--border)';
+          const bgColor = st==='ok' ? 'rgba(29,158,117,0.06)' : st==='fail' ? 'rgba(163,45,45,0.06)' : 'var(--bg2)';
+          const badge = st==='ok' ? '<span style="font-size:10px;color:#1D9E75">✓</span>' : st==='fail' ? '<span style="font-size:10px;color:#A32D2D">✗</span>' : '';
+          return `<div id="op-wrap-${v.code}" style="display:flex;align-items:center;gap:6px;background:${bgColor};padding:6px 10px;border-radius:var(--radius);border:0.5px solid ${borderColor};transition:border-color .3s,background .3s">
+            <span style="font-size:12px;font-weight:600;min-width:52px">${v.code}</span>
+            <input type="number" id="op-${v.code}" value="${(S.prices[v.code]||0).toFixed(2)}" step="0.01"
+              style="width:90px;font-size:13px;padding:4px 8px" />
+            <span id="op-status-${v.code}" style="width:14px;text-align:center">${badge}</span>
+          </div>`;
+        }).join('')
       : '<span style="font-size:13px;color:var(--text3)">尚無持股</span>';
   }
 
@@ -1408,6 +1431,86 @@ function saveOverviewPrices() {
   });
   saveState(); renderOverview(); toast('✓ 現價已更新');
 }
+
+// ── 自動抓取現價 ──────────────────────────────────────
+const _priceStatus = {}; // 'ok' | 'fail' | 'loading' | 'none'
+
+function setPriceStatus(code, status) {
+  _priceStatus[code] = status;
+  const wrap = document.getElementById('op-wrap-' + code);
+  const badge = document.getElementById('op-status-' + code);
+  if (!wrap || !badge) return;
+  if (status === 'ok') {
+    wrap.style.borderColor = '#1D9E75';
+    wrap.style.background = 'rgba(29,158,117,0.06)';
+    badge.innerHTML = '<span style="font-size:10px;color:#1D9E75">✓</span>';
+  } else if (status === 'fail') {
+    wrap.style.borderColor = '#A32D2D';
+    wrap.style.background = 'rgba(163,45,45,0.06)';
+    badge.innerHTML = '<span style="font-size:10px;color:#A32D2D">✗</span>';
+  } else if (status === 'loading') {
+    wrap.style.borderColor = 'var(--text3)';
+    wrap.style.background = 'var(--bg2)';
+    badge.innerHTML = '<span style="font-size:10px;color:var(--text3)">⏳</span>';
+  }
+}
+
+async function fetchAllPrices() {
+  const holdings = getHoldings();
+  if (!holdings.length) { toast('⚠️ 尚無持股'); return; }
+  const btn = document.getElementById('btn-fetch-prices');
+  const status = document.getElementById('price-fetch-status');
+  btn.disabled = true; btn.textContent = '⏳ 抓取中...';
+  let ok = 0, fail = 0;
+  for (const v of holdings) {
+    status.textContent = `正在抓取 ${v.code}...`;
+    setPriceStatus(v.code, 'loading');
+    const price = await fetchPrice(v.code);
+    if (price) {
+      S.prices[v.code] = price;
+      const el = document.getElementById('op-' + v.code);
+      if (el) el.value = price.toFixed(2);
+      setPriceStatus(v.code, 'ok');
+      ok++;
+    } else {
+      setPriceStatus(v.code, 'fail');
+      fail++;
+    }
+  }
+  saveState();
+  btn.disabled = false; btn.textContent = '🔄 自動抓取';
+  status.textContent = `✓ 成功 ${ok} 筆${fail > 0 ? `，${fail} 筆需手動` : ''}`;
+  // 更新持股表格（不重新渲染整個 overview，避免清除狀態框線）
+  const h2 = getHoldings();
+  document.getElementById('holdings-table').innerHTML = h2.map(v => `<tr>
+    <td><strong>${v.code}</strong></td><td>${v.name}</td><td>${fmt(v.shares)} 股</td>
+    <td>${fmt(v.avgPrice,2)}</td><td>${fmtM(v.cost)}</td><td>${fmt(v.price,2)}</td><td>${fmtM(v.value)}</td>
+    <td class="${v.pnl>=0?'pos':'neg'}">${v.pnl>=0?'+':''}${fmtM(v.pnl)}</td>
+    <td class="${v.ret>=0?'pos':'neg'}">${v.ret>=0?'+':''}${fmt(v.ret,2)}%</td></tr>`).join('');
+  drawPie(h2); drawCostBars(h2);
+  toast(`✓ 抓取完成：${ok} 筆成功${fail > 0 ? `，${fail} 筆失敗` : ''}`);
+}
+
+async function fetchPrice(code) {
+  const suffixes = ['.TW', '.TWO'];
+  for (const sfx of suffixes) {
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${code}${sfx}?interval=1d&range=1d`;
+      const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+      const res = await fetch(proxy, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) continue;
+      const wrapper = await res.json();
+      const data = JSON.parse(wrapper.contents || '{}');
+      const meta = data?.chart?.result?.[0]?.meta;
+      if (!meta) continue;
+      // 優先用 regularMarketPrice，其次 previousClose
+      const price = meta.regularMarketPrice || meta.chartPreviousClose || meta.previousClose;
+      if (price && price > 0) return price;
+    } catch(e) { continue; }
+  }
+  return null;
+}
+
 function drawPie(h) {
   const totalShares = h.reduce((a, v) => a + v.shares, 0);
   const ctx = document.getElementById('pieChart').getContext('2d');
@@ -1497,10 +1600,13 @@ function renderRecent() {
 function renderTrades() {
   const fc = document.getElementById('f-code').value;
   const ft = document.getElementById('f-type').value;
+  const fs = document.getElementById('f-sort')?.value || 'asc';
   const codes = [...new Set(S.trades.map(t => t.code))];
   const sel = document.getElementById('f-code'); const cur = sel.value;
   sel.innerHTML = '<option value="">全部 ETF</option>' + codes.map(c => `<option value="${c}" ${c===cur?'selected':''}>${c}</option>`).join('');
-  const rows = [...S.trades].filter(t => (!fc||t.code===fc) && (!ft||t.type===ft)).sort((a,b) => new Date(a.date)-new Date(b.date));
+  const rows = [...S.trades]
+    .filter(t => (!fc||t.code===fc) && (!ft||t.type===ft))
+    .sort((a,b) => fs==='desc' ? new Date(b.date)-new Date(a.date) : new Date(a.date)-new Date(b.date));
   document.getElementById('trades-table').innerHTML = rows.length ? rows.map(t => {
     const totalCost = t.shares * t.price + (t.fee || 0);
     return `<tr><td>${t.date}</td><td><strong>${t.code}</strong></td><td>${t.name}</td><td>${badgeType(t.type)}</td>
@@ -1716,81 +1822,104 @@ function renderAnalysis() {
   const tCost = h.reduce((a,v)=>a+v.cost,0);
   const tVal  = h.reduce((a,v)=>a+v.value,0);
   const tPnl  = tVal - tCost;
-  const estDiv = S.dividends.reduce((a,d) => a + (d.exshares||0) * (d.amount||0), 0);
-  const yield_ = tVal > 0 ? (estDiv/tVal*100) : 0;
-  document.getElementById('perf-metrics').innerHTML = `
-    <div class="metric"><div class="metric-label">整體報酬率</div><div class="metric-val ${tPnl>=0?'pos':'neg'}">${tCost>0?((tPnl/tCost)*100).toFixed(2):0}%</div></div>
-    <div class="metric"><div class="metric-label">預估年股息</div><div class="metric-val">${fmtM(estDiv)}</div><div class="metric-sub">月均 ${fmtM(estDiv/12)}</div></div>
-    <div class="metric"><div class="metric-label">殖利率</div><div class="metric-val">${fmt(yield_,2)}%</div></div>
-    <div class="metric"><div class="metric-label">交易筆數</div><div class="metric-val">${S.trades.length}</div></div>`;
 
-  // ── 已領股息總金額 ────────────────────────────────
   const today = new Date();
-  const pastDivs = S.dividends.filter(d => d.paydate && new Date(d.paydate) <= today);
-  const totalReceived = pastDivs.reduce((a,d) => {
-    const gross = (d.exshares||0)*(d.amount||0);
-    const remit = d.remit ?? 10;
-    return a + (gross > 0 ? gross - remit : 0);
-  }, 0);
-  // 最早發放日
-  const allWithPaydate = S.dividends.filter(d => d.paydate).sort((a,b) => new Date(a.paydate)-new Date(b.paydate));
+
+  // 近 12 個月實領（以預計發放日為準）
+  const twelveMonthsAgo = new Date(today); twelveMonthsAgo.setFullYear(today.getFullYear() - 1);
+  const recent12Net = S.dividends
+    .filter(d => { if (!d.paydate) return false; const pd=new Date(d.paydate); return pd>=twelveMonthsAgo && pd<=today; })
+    .reduce((a,d) => a + Math.max(0,(d.exshares||0)*(d.amount||0)-(d.remit??10)), 0);
+
+  // 已領股息累計（paydate ≤ 今天）
+  const allWithPaydate = S.dividends.filter(d=>d.paydate).sort((a,b)=>new Date(a.paydate)-new Date(b.paydate));
   const earliestPaydate = allWithPaydate.length > 0 ? allWithPaydate[0].paydate : null;
-  const fmtDate = (str) => {
-    if (!str) return '';
-    const d = new Date(str);
-    return `${d.getFullYear()} 年 ${d.getMonth()+1} 月 ${d.getDate()} 日`;
-  };
-  const card = document.getElementById('received-div-card');
-  if (card) {
-    if (allWithPaydate.length === 0) {
-      card.style.display = 'none';
-    } else {
-      card.style.display = '';
-      card.innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-          <div>
-            <div class="card-title" style="margin-bottom:4px">已領股息總金額</div>
-            <div style="font-size:11px;color:var(--text3)">自 ${fmtDate(earliestPaydate)} 起累計</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:28px;font-weight:700;color:#0F6E56;letter-spacing:-0.5px">${fmtM(totalReceived)}</div>
-            <div style="font-size:12px;color:var(--text2);margin-top:2px">共 ${pastDivs.length} 筆已發放</div>
-          </div>
-        </div>`;
-    }
-  }
+  const allReceived = allWithPaydate
+    .filter(d => new Date(d.paydate) <= today)
+    .reduce((a,d) => a + Math.max(0,(d.exshares||0)*(d.amount||0)-(d.remit??10)), 0);
 
-  const maxA = Math.max(...h.map(v=>Math.abs(v.ret)), 1);
-  document.getElementById('ret-bars').innerHTML = h.map(v =>
-    `<div class="chart-bar"><div class="bar-label">${v.code}</div><div class="bar-track"><div class="bar-fill" style="width:${(Math.abs(v.ret)/maxA*100).toFixed(1)}%;background:${v.ret>=0?'#1D9E75':'#A32D2D'}"><span class="bar-val">${v.ret>=0?'+':''}${fmt(v.ret,2)}%</span></div></div></div>`).join('');
+  const fmtDate = str => { if(!str) return ''; const d=new Date(str); return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`; };
 
-  // 預估股息收益：依代號合計，每檔只顯示一條
+  // ── 指標卡：未實現損益 / 已領股息（含起始日）/ 近12個月股息 ─
+  document.getElementById('perf-metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">未實現損益</div><div class="metric-val ${tPnl>=0?'pos':'neg'}">${tPnl>=0?'+':''}${fmtM(tPnl)}</div><div class="metric-sub">報酬率 ${tCost>0?((tPnl/tCost)*100).toFixed(2):0}%</div></div>
+    <div class="metric"><div class="metric-label">已領股息（累計）</div><div class="metric-val">${fmtM(allReceived)}</div><div class="metric-sub">${earliestPaydate?'自 '+fmtDate(earliestPaydate)+' 起':''}</div></div>
+    <div class="metric"><div class="metric-label">股息（近12個月）</div><div class="metric-val">${fmtM(recent12Net)}</div><div class="metric-sub">月均 ${fmtM(recent12Net/12)}</div></div>`;
+
+  // ── 含息總報酬率（各 ETF）─────────────────────────────
+  const divReceivedByCode = {};
+  S.dividends.forEach(d => {
+    if (!d.paydate || new Date(d.paydate) > today) return;
+    const net = Math.max(0,(d.exshares||0)*(d.amount||0)-(d.remit??10));
+    divReceivedByCode[d.code] = (divReceivedByCode[d.code]||0) + net;
+  });
+  const retWithDivData = h.map(v => {
+    const divRec = divReceivedByCode[v.code] || 0;
+    const totalRet = v.cost > 0 ? ((v.pnl + divRec) / v.cost * 100) : 0;
+    return { ...v, divRec, totalRet };
+  });
+  const maxAbsRet = Math.max(...retWithDivData.map(v => Math.abs(v.totalRet)), 1);
+  document.getElementById('ret-bars').innerHTML = retWithDivData.map(v => `
+    <div class="chart-bar">
+      <div class="bar-label">${v.code}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${(Math.abs(v.totalRet)/maxAbsRet*100).toFixed(1)}%;background:${v.totalRet>=0?'#1D9E75':'#A32D2D'}">
+          <span class="bar-val">${v.totalRet>=0?'+':''}${fmt(v.totalRet,2)}%</span>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--text3);padding-left:62px;margin-top:-4px;margin-bottom:6px">
+      資本 ${v.ret>=0?'+':''}${fmt(v.ret,2)}%　已領息 ${fmtM(v.divRec)}
+    </div>`).join('');
+
+  // 股息收益：依代號合計
   const divByCode = {};
   S.dividends.forEach(d => {
-    const net = Math.max(0, (d.exshares||0)*(d.amount||0) - (d.remit??10));
-    if (!divByCode[d.code]) divByCode[d.code] = { code: d.code, net: 0 };
+    const net = Math.max(0,(d.exshares||0)*(d.amount||0)-(d.remit??10));
+    if (!divByCode[d.code]) divByCode[d.code]={code:d.code,net:0};
     divByCode[d.code].net += net;
   });
-  const divEntries = Object.values(divByCode).filter(v => v.net > 0).sort((a,b) => b.net - a.net);
-  const totDiv = divEntries.reduce((a, v) => a + v.net, 0);
-  document.getElementById('div-stats').innerHTML = divEntries.map((v, i) =>
+  const divEntries = Object.values(divByCode).filter(v=>v.net>0).sort((a,b)=>b.net-a.net);
+  const totDiv = divEntries.reduce((a,v)=>a+v.net,0);
+  document.getElementById('div-stats').innerHTML = divEntries.map((v,i) =>
     `<div class="chart-bar"><div class="bar-label" style="font-size:11px">${v.code}</div><div class="bar-track"><div class="bar-fill" style="width:${totDiv>0?(v.net/totDiv*100).toFixed(1):0}%;background:${PIE_COLORS[i%PIE_COLORS.length]}"><span class="bar-val">${fmtM(v.net)}</span></div></div></div>`
-  ).join('') + `<div style="display:flex;gap:12px;font-size:13px;border-top:0.5px solid var(--border);padding-top:10px;margin-top:8px"><span style="color:var(--text2)">年化殖利率</span><span style="font-weight:600;color:#0F6E56">${fmt(yield_,2)}%</span></div>`;
+  ).join('') + `<div style="border-top:0.5px solid var(--border);padding-top:8px;margin-top:8px;font-size:10px;color:var(--text3)">※ 各檔股息為所有除權息紀錄的實領金額合計</div>`;
+
   drawLine();
   drawDivChart();
 }
 let divBarChart = null;
 let _divChartMode = 'year';
+let _divYearFilter = null; // null = 全部；數字 = 指定年
+
 function setDivChartMode(mode) {
   _divChartMode = mode;
   document.getElementById('div-chart-year-btn').classList.toggle('active', mode==='year');
   document.getElementById('div-chart-month-btn').classList.toggle('active', mode==='month');
+  // 月模式才顯示年度導航
+  const nav = document.getElementById('div-year-nav');
+  if (nav) nav.style.display = mode==='month' ? 'flex' : 'none';
+  drawDivChart();
+}
+function shiftDivYear(delta) {
+  const years = [...new Set(S.dividends.filter(d=>d.paydate).map(d=>d.paydate.slice(0,4)))].sort();
+  if (!years.length) return;
+  if (_divYearFilter === null) _divYearFilter = new Date().getFullYear().toString();
+  const idx = years.indexOf(String(_divYearFilter));
+  const newIdx = Math.max(0, Math.min(years.length-1, idx+delta));
+  _divYearFilter = years[newIdx];
+  drawDivChart();
+}
+function resetDivYear() {
+  _divYearFilter = null;
   drawDivChart();
 }
 function drawDivChart() {
   const buckets = {};
   S.dividends.forEach(d => {
     if (!d.paydate) return;
+    // 月模式且有年份篩選時，只顯示該年
+    if (_divChartMode === 'month' && _divYearFilter && !d.paydate.startsWith(_divYearFilter)) return;
     const gross = (d.exshares||0)*(d.amount||0);
     const remit = d.remit ?? 10;
     const net = gross > 0 ? gross - remit : 0;
@@ -1800,6 +1929,12 @@ function drawDivChart() {
   });
   const labels = Object.keys(buckets).sort();
   const data = labels.map(k => Math.round(buckets[k]));
+  // Update year label
+  const yearLabel = document.getElementById('div-year-label');
+  if (yearLabel) yearLabel.textContent = _divChartMode==='month' ? (_divYearFilter||'全部') : '';
+  const nav = document.getElementById('div-year-nav');
+  if (nav) nav.style.display = _divChartMode==='month' ? 'flex' : 'none';
+
   const ctx = document.getElementById('div-bar-chart')?.getContext('2d');
   if (!ctx) return;
   if (divBarChart) divBarChart.destroy();
